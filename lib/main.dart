@@ -1,21 +1,40 @@
 import 'package:flutter/material.dart';
-import 'package:project/splascreen.dart';
-import 'package:project/theme/app_theme.dart';
+import 'theme/app_theme.dart';
 
 void main() {
-  runApp(const MyApp());
+  runApp(const SmartCampusApp());
 }
 
-class MyApp extends StatelessWidget {
-  const MyApp({super.key});
+class SmartCampusApp extends StatelessWidget {
+  const SmartCampusApp({super.key});
 
-  // This widget is the root of your application.
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      theme: AppTheme.lightTheme,
       debugShowCheckedModeBanner: false,
-      home: SplashScreen(),
+      title: 'Smart Campus Companion',
+
+      // App theme
+      theme: AppTheme.lightTheme,
+
+      home: const HomePage(),
+    );
+  }
+}
+
+class HomePage extends StatelessWidget {
+  const HomePage({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(title: const Text('Smart Campus Companion')),
+      body: const Center(
+        child: Text(
+          'Welcome to Smart Campus Companion',
+          style: TextStyle(fontSize: 20),
+        ),
+      ),
     );
   }
 }
