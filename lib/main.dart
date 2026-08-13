@@ -1,8 +1,17 @@
 import 'package:flutter/material.dart';
 import 'package:project/splashscreen.dart';
+import 'package:firebase_core/firebase_core.dart';
+import 'package:flutter/material.dart';
+import 'firebase_options.dart';
+import 'screens/signup_page.dart';
+
 import 'theme/app_theme.dart';
 
-void main() {
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+
+  await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
+
   runApp(const SmartCampusApp());
 }
 
@@ -14,9 +23,8 @@ class SmartCampusApp extends StatelessWidget {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
       title: 'Smart Campus Companion',
-
-      // App theme
       theme: AppTheme.lightTheme,
+
 
       // Start with Splash Screen
       home: const SplashScreen(),
@@ -39,6 +47,7 @@ class HomePage extends StatelessWidget {
           style: TextStyle(fontSize: 20),
         ),
       ),
+      home: const SignupPage(),
     );
   }
 }
