@@ -47,7 +47,7 @@ class AdminDashboard extends StatelessWidget {
             const SizedBox(height: 25),
 
             Text(
-              'Campus Management',
+              'Campus Management ',
               style: Theme.of(
                 context,
               ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
