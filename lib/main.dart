@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:project/splashscreen.dart';
 import 'theme/app_theme.dart';
 
 void main() {
@@ -17,7 +18,8 @@ class SmartCampusApp extends StatelessWidget {
       // App theme
       theme: AppTheme.lightTheme,
 
-      home: const HomePage(),
+      // Start with Splash Screen
+      home: const SplashScreen(),
     );
   }
 }
@@ -28,7 +30,9 @@ class HomePage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Smart Campus Companion')),
+      appBar: AppBar(
+        title: const Text('Smart Campus Companion'),
+      ),
       body: const Center(
         child: Text(
           'Welcome to Smart Campus Companion',
