@@ -1,6 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:project/admin/admin_login.dart';
 
 import '../theme/app_theme.dart';
 
@@ -28,7 +29,7 @@ class _SignupPageState extends State<SignupPage> {
   bool _obscureConfirmPassword = true;
 
   final FirebaseAuth _auth = FirebaseAuth.instance;
-  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+  //final FirebaseFirestore _firestore = FirebaseFirestore.instance;
 
   @override
   void dispose() {
@@ -69,7 +70,7 @@ class _SignupPageState extends State<SignupPage> {
       String uid = userCredential.user!.uid;
 
       // 2. Create user document in Firestore
-      await _firestore.collection('users').doc(uid).set({
+      await FirebaseFirestore.instance.collection('users').doc(uid).set({
         'name': _nameController.text.trim(),
         'email': _emailController.text.trim(),
         'rollNo': _rollNoController.text.trim(),
@@ -416,7 +417,12 @@ class _SignupPageState extends State<SignupPage> {
                     ),
                     TextButton(
                       onPressed: () {
-                        Navigator.pop(context);
+                        Navigator.pushReplacement(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => AdminLoginPage(),
+                          ),
+                        );
                       },
                       child: const Text(
                         'Login',
