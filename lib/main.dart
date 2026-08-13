@@ -25,7 +25,6 @@ class SmartCampusApp extends StatelessWidget {
       title: 'Smart Campus Companion',
       theme: AppTheme.lightTheme,
 
-
       // Start with Splash Screen
       home: const SplashScreen(),
     );
@@ -37,17 +36,6 @@ class HomePage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Smart Campus Companion'),
-      ),
-      body: const Center(
-        child: Text(
-          'Welcome to Smart Campus Companion',
-          style: TextStyle(fontSize: 20),
-        ),
-      ),
-      home: const SignupPage(),
-    );
+    return MaterialApp(home: const SignupPage());
   }
 }

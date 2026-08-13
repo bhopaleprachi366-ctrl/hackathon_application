@@ -1,4 +1,7 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:project/admin/admin_login.dart';
+import 'package:project/admin/dashboard.dart';
 
 import '../../theme/app_theme.dart';
 
@@ -10,6 +13,28 @@ class SplashScreen extends StatefulWidget {
 }
 
 class _SplashScreenState extends State<SplashScreen> {
+  FirebaseAuth auth = FirebaseAuth.instance;
+  void isUserLogin() async {
+    await Future.delayed(Duration(seconds: 2));
+    if (auth.currentUser == null) {
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (context) => AdminLoginPage()),
+      );
+    } else {
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (context) => AdminDashboard()),
+      );
+    }
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    isUserLogin();
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -58,10 +83,7 @@ class _SplashScreenState extends State<SplashScreen> {
 
             const Text(
               'Your Campus. Your Companion.',
-              style: TextStyle(
-                fontSize: 14,
-                color: Colors.grey,
-              ),
+              style: TextStyle(fontSize: 14, color: Colors.grey),
             ),
 
             const SizedBox(height: 35),
