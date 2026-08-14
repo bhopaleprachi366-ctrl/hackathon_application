@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:project/admin/manage_cancellation.dart';
 import 'package:project/admin/manage_notice.dart';
+import 'package:project/admin/manage_student.dart';
 import 'package:project/admin/manage_timetable.dart';
 
 import '../theme/app_theme.dart';
@@ -107,7 +108,23 @@ class AdminDashboard extends StatelessWidget {
                 );
               },
             ),
+            const SizedBox(height: 15),
 
+            // Manage Students Card
+            _buildManagementCard(
+              context: context,
+              icon: Icons.people_outline,
+              title: 'Manage Students',
+              subtitle: 'View registered student information',
+              onTap: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => const ManageStudentsPage(),
+                  ),
+                );
+              },
+            ),
             const SizedBox(height: 25),
 
             // Quick information
