@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:project/admin/manage_notice.dart';
 
 import '../theme/app_theme.dart';
 
@@ -62,7 +63,10 @@ class AdminDashboard extends StatelessWidget {
               title: 'Manage Notices',
               subtitle: 'Add, edit and delete campus notices',
               onTap: () {
-                // Navigate to Manage Notices page later.
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => ManageNoticesPage()),
+                );
               },
             ),
 
@@ -74,9 +78,7 @@ class AdminDashboard extends StatelessWidget {
               icon: Icons.calendar_month_outlined,
               title: 'Manage Timetable',
               subtitle: 'Manage lectures, subjects and schedules',
-              onTap: () {
-                // Navigate to Manage Timetable page later.
-              },
+              onTap: () {},
             ),
 
             const SizedBox(height: 15),
