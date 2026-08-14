@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:project/admin/manage_cancellation.dart';
 import 'package:project/admin/manage_notice.dart';
 import 'package:project/admin/manage_timetable.dart';
 
@@ -98,7 +99,12 @@ class AdminDashboard extends StatelessWidget {
               title: 'Lecture Cancellations',
               subtitle: 'Add and manage cancelled lectures',
               onTap: () {
-                // Navigate to Cancellation page later.
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => ManageCancellationsPage(),
+                  ),
+                );
               },
             ),
 
