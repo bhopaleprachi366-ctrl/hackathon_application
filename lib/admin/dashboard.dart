@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:project/admin/manage_notice.dart';
+import 'package:project/admin/manage_timetable.dart';
 
 import '../theme/app_theme.dart';
 
@@ -78,7 +79,14 @@ class AdminDashboard extends StatelessWidget {
               icon: Icons.calendar_month_outlined,
               title: 'Manage Timetable',
               subtitle: 'Manage lectures, subjects and schedules',
-              onTap: () {},
+              onTap: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => ManageTimetablePage(),
+                  ),
+                );
+              },
             ),
 
             const SizedBox(height: 15),
