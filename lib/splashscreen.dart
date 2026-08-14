@@ -2,6 +2,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:project/admin/admin_login.dart';
 import 'package:project/admin/dashboard.dart';
+import 'package:project/navigation/bottom_navigation.dart';
 
 import '../../theme/app_theme.dart';
 
@@ -24,7 +25,7 @@ class _SplashScreenState extends State<SplashScreen> {
     } else {
       Navigator.pushReplacement(
         context,
-        MaterialPageRoute(builder: (context) => AdminDashboard()),
+        MaterialPageRoute(builder: (context) => AdminMainPage()),
       );
     }
   }
