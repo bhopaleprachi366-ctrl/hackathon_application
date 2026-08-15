@@ -1,43 +1,180 @@
 import 'package:flutter/material.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 
-class MySubscriptionsPage extends StatefulWidget {
-  const MySubscriptionsPage({super.key});
+class MySubscriptionPage extends StatefulWidget {
+  const MySubscriptionPage({super.key});
 
   @override
-  State<MySubscriptionsPage> createState() => _MySubscriptionsPageState();
+  State<MySubscriptionPage> createState() => _MySubscriptionPageState();
 }
 
-class _MySubscriptionsPageState extends State<MySubscriptionsPage> {
-  final List<Map<String, dynamic>> subscriptions = [
-    {
-      'name': 'Fresh Milk',
-      'category': 'Dairy',
-      'price': 40,
-      'unit': 'litre',
-      'quantity': 1,
-      'frequency': 'Daily',
-      'nextDelivery': 'Tomorrow',
-      'status': 'Active',
-      'icon': Icons.local_drink_outlined,
-    },
-    {
-      'name': 'Drinking Water',
-      'category': 'Water',
-      'price': 80,
-      'unit': 'can',
-      'quantity': 2,
-      'frequency': 'Weekly',
-      'nextDelivery': '20 Aug 2026',
-      'status': 'Active',
-      'icon': Icons.water_drop_outlined,
-    },
-  ];
+class _MySubscriptionPageState extends State<MySubscriptionPage> {
+  Stream<List<Map<String, dynamic>>> getSubscriptions() {
+    return FirebaseFirestore.instance
+        .collection('subscriptions')
+        .orderBy('createdAt', descending: true)
+        .snapshots()
+        .map((snapshot) {
+          return snapshot.docs.map((doc) {
+            final data = doc.data();
+
+            return {
+              'id': doc.id,
+              'name': data['serviceName'] ?? 'Service',
+              'category': data['category'] ?? 'Category',
+              'price': data['price'] ?? 0,
+              'unit': data['unit'] ?? '',
+              'quantity': data['quantity'] ?? 1,
+              'frequency': data['frequency'] ?? 'Daily',
+              'status': data['status'] ?? 'Active',
+              'nextDelivery': data['nextDelivery'] ?? 'Not scheduled',
+              'address': data['address'] ?? '',
+              'icon': _getServiceIcon(data['category']),
+            };
+          }).toList();
+        });
+  }
+
+  // ----------------------------------------------------------
+  // SERVICE ICON
+  // ----------------------------------------------------------
+
+  IconData _getServiceIcon(String? category) {
+    switch (category) {
+      case 'Dairy':
+        return Icons.local_drink_outlined;
+
+      case 'Water':
+        return Icons.water_drop_outlined;
+
+      case 'Food':
+        return Icons.restaurant_outlined;
+
+      case 'Newspaper':
+        return Icons.menu_book_outlined;
+
+      case 'Vegetables':
+        return Icons.eco_outlined;
+
+      default:
+        return Icons.miscellaneous_services_outlined;
+    }
+  }
+
+  // ----------------------------------------------------------
+  // UPDATE STATUS
+  // ----------------------------------------------------------
+
+  Future<void> updateSubscriptionStatus(
+    String documentId,
+    String newStatus,
+  ) async {
+    try {
+      await FirebaseFirestore.instance
+          .collection('subscriptions')
+          .doc(documentId)
+          .update({
+            'status': newStatus,
+            'updatedAt': FieldValue.serverTimestamp(),
+          });
+
+      if (!mounted) return;
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            newStatus == 'Paused'
+                ? 'Subscription paused'
+                : 'Subscription resumed',
+          ),
+        ),
+      );
+    } catch (e) {
+      if (!mounted) return;
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error updating subscription: $e')),
+      );
+    }
+  }
+
+  // ----------------------------------------------------------
+  // CANCEL SUBSCRIPTION
+  // ----------------------------------------------------------
+
+  Future<void> cancelSubscription(String documentId) async {
+    try {
+      await FirebaseFirestore.instance
+          .collection('subscriptions')
+          .doc(documentId)
+          .update({
+            'status': 'Cancelled',
+            'updatedAt': FieldValue.serverTimestamp(),
+          });
+
+      if (!mounted) return;
+
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('Subscription cancelled')));
+    } catch (e) {
+      if (!mounted) return;
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error cancelling subscription: $e')),
+      );
+    }
+  }
+
+  // ----------------------------------------------------------
+  // CONFIRM CANCEL DIALOG
+  // ----------------------------------------------------------
+
+  void showCancelDialog(String documentId) {
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: const Text('Cancel Subscription'),
+          content: const Text(
+            'Are you sure you want to cancel this subscription?',
+          ),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.pop(context);
+              },
+              child: const Text('No'),
+            ),
+            ElevatedButton(
+              onPressed: () async {
+                Navigator.pop(context);
+                await cancelSubscription(documentId);
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.red,
+                foregroundColor: Colors.white,
+              ),
+              child: const Text('Yes, Cancel'),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  // ----------------------------------------------------------
+  // BUILD
+  // ----------------------------------------------------------
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color(0xFFF5F9FC),
 
+      // ------------------------------------------------------
+      // APP BAR
+      // ------------------------------------------------------
       appBar: AppBar(
         backgroundColor: const Color(0xFF1565C0),
         elevation: 0,
@@ -46,25 +183,122 @@ class _MySubscriptionsPageState extends State<MySubscriptionsPage> {
           'My Subscriptions',
           style: TextStyle(
             color: Colors.white,
-            fontSize: 21,
+            fontSize: 22,
             fontWeight: FontWeight.bold,
           ),
         ),
       ),
 
-      body: subscriptions.isEmpty
-          ? _emptyState()
-          : ListView.builder(
-              padding: const EdgeInsets.all(16),
-              itemCount: subscriptions.length,
-              itemBuilder: (context, index) {
-                return _subscriptionCard(subscriptions[index], index);
-              },
-            ),
+      // ------------------------------------------------------
+      // FIREBASE DATA
+      // ------------------------------------------------------
+      body: StreamBuilder<List<Map<String, dynamic>>>(
+        stream: getSubscriptions(),
+        builder: (context, snapshot) {
+          // Loading
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            return const Center(
+              child: CircularProgressIndicator(color: Color(0xFF1565C0)),
+            );
+          }
+
+          // Error
+          if (snapshot.hasError) {
+            return Center(
+              child: Padding(
+                padding: const EdgeInsets.all(20),
+                child: Text(
+                  'Something went wrong.\n\n${snapshot.error}',
+                  textAlign: TextAlign.center,
+                  style: const TextStyle(
+                    color: Color(0xFF6B778C),
+                    fontSize: 15,
+                  ),
+                ),
+              ),
+            );
+          }
+
+          final subscriptions = snapshot.data ?? [];
+
+          // Empty
+          if (subscriptions.isEmpty) {
+            return _emptyState();
+          }
+
+          // Subscription List
+          return ListView.builder(
+            padding: const EdgeInsets.fromLTRB(16, 18, 16, 25),
+            itemCount: subscriptions.length,
+            itemBuilder: (context, index) {
+              return _subscriptionCard(subscriptions[index]);
+            },
+          );
+        },
+      ),
     );
   }
 
-  Widget _subscriptionCard(Map<String, dynamic> subscription, int index) {
+  // ----------------------------------------------------------
+  // EMPTY STATE
+  // ----------------------------------------------------------
+
+  Widget _emptyState() {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(30),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Container(
+              height: 90,
+              width: 90,
+              decoration: BoxDecoration(
+                color: const Color(0xFFE8F1FB),
+                borderRadius: BorderRadius.circular(25),
+              ),
+              child: const Icon(
+                Icons.subscriptions_outlined,
+                size: 45,
+                color: Color(0xFF1565C0),
+              ),
+            ),
+
+            const SizedBox(height: 20),
+
+            const Text(
+              'No subscriptions yet',
+              style: TextStyle(
+                fontSize: 20,
+                fontWeight: FontWeight.bold,
+                color: Color(0xFF172B4D),
+              ),
+            ),
+
+            const SizedBox(height: 8),
+
+            const Text(
+              'Your active subscriptions will appear here.',
+              textAlign: TextAlign.center,
+              style: TextStyle(fontSize: 14, color: Color(0xFF6B778C)),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  // ----------------------------------------------------------
+  // SUBSCRIPTION CARD
+  // ----------------------------------------------------------
+
+  Widget _subscriptionCard(Map<String, dynamic> subscription) {
+    final String documentId = subscription['id'];
+    final String status = subscription['status'];
+
+    final bool isPaused = status == 'Paused';
+    final bool isCancelled = status == 'Cancelled';
+
     return Container(
       margin: const EdgeInsets.only(bottom: 16),
       padding: const EdgeInsets.all(16),
@@ -79,8 +313,12 @@ class _MySubscriptionsPageState extends State<MySubscriptionsPage> {
           ),
         ],
       ),
+
       child: Column(
         children: [
+          // --------------------------------------------------
+          // SERVICE HEADER
+          // --------------------------------------------------
           Row(
             children: [
               Container(
@@ -136,22 +374,8 @@ class _MySubscriptionsPageState extends State<MySubscriptionsPage> {
                 ),
               ),
 
-              // Status
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 5),
-                decoration: BoxDecoration(
-                  color: const Color(0xFFE8F6F3),
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: Text(
-                  subscription['status'],
-                  style: const TextStyle(
-                    color: Color(0xFF008F7A),
-                    fontSize: 11,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-              ),
+              // STATUS
+              _statusBadge(status),
             ],
           ),
 
@@ -161,7 +385,9 @@ class _MySubscriptionsPageState extends State<MySubscriptionsPage> {
 
           const SizedBox(height: 15),
 
-          // Quantity & Frequency
+          // --------------------------------------------------
+          // QUANTITY + FREQUENCY
+          // --------------------------------------------------
           Row(
             children: [
               Expanded(
@@ -184,7 +410,9 @@ class _MySubscriptionsPageState extends State<MySubscriptionsPage> {
 
           const SizedBox(height: 15),
 
-          // Next Delivery
+          // --------------------------------------------------
+          // NEXT DELIVERY
+          // --------------------------------------------------
           Container(
             padding: const EdgeInsets.all(12),
             decoration: BoxDecoration(
@@ -196,7 +424,7 @@ class _MySubscriptionsPageState extends State<MySubscriptionsPage> {
                 const Icon(
                   Icons.local_shipping_outlined,
                   color: Color(0xFF1565C0),
-                  size: 22,
+                  size: 20,
                 ),
 
                 const SizedBox(width: 10),
@@ -212,7 +440,7 @@ class _MySubscriptionsPageState extends State<MySubscriptionsPage> {
                   subscription['nextDelivery'],
                   style: const TextStyle(
                     fontSize: 13,
-                    fontWeight: FontWeight.bold,
+                    fontWeight: FontWeight.w600,
                     color: Color(0xFF172B4D),
                   ),
                 ),
@@ -222,31 +450,73 @@ class _MySubscriptionsPageState extends State<MySubscriptionsPage> {
 
           const SizedBox(height: 15),
 
-          // Manage Button
-          SizedBox(
-            width: double.infinity,
-            height: 45,
-            child: OutlinedButton(
-              onPressed: () {
-                _showManageDialog(index);
-              },
-              style: OutlinedButton.styleFrom(
-                foregroundColor: const Color(0xFF1565C0),
-                side: const BorderSide(color: Color(0xFF1565C0)),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(12),
+          // --------------------------------------------------
+          // MANAGE BUTTON
+          // --------------------------------------------------
+          if (!isCancelled)
+            SizedBox(
+              width: double.infinity,
+              height: 45,
+              child: OutlinedButton(
+                onPressed: () {
+                  _showManageBottomSheet(subscription);
+                },
+                style: OutlinedButton.styleFrom(
+                  foregroundColor: const Color(0xFF1565C0),
+                  side: const BorderSide(color: Color(0xFF1565C0)),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                ),
+                child: Text(
+                  isPaused ? 'Manage Subscription' : 'Manage Subscription',
                 ),
               ),
-              child: const Text(
-                'Manage Subscription',
-                style: TextStyle(fontWeight: FontWeight.w600),
-              ),
             ),
-          ),
         ],
       ),
     );
   }
+
+  // ----------------------------------------------------------
+  // STATUS BADGE
+  // ----------------------------------------------------------
+
+  Widget _statusBadge(String status) {
+    Color backgroundColor;
+    Color textColor;
+
+    if (status == 'Paused') {
+      backgroundColor = const Color(0xFFFFF4E5);
+      textColor = const Color(0xFFE08A00);
+    } else if (status == 'Cancelled') {
+      backgroundColor = const Color(0xFFFFEBEE);
+      textColor = Colors.red;
+    } else {
+      backgroundColor = const Color(0xFFE8F6F3);
+      textColor = const Color(0xFF008F7A);
+    }
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 5),
+      decoration: BoxDecoration(
+        color: backgroundColor,
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: Text(
+        status,
+        style: TextStyle(
+          color: textColor,
+          fontSize: 11,
+          fontWeight: FontWeight.bold,
+        ),
+      ),
+    );
+  }
+
+  // ----------------------------------------------------------
+  // INFO ITEM
+  // ----------------------------------------------------------
 
   Widget _infoItem(IconData icon, String title, String value) {
     return Row(
@@ -255,104 +525,102 @@ class _MySubscriptionsPageState extends State<MySubscriptionsPage> {
 
         const SizedBox(width: 8),
 
-        Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              title,
-              style: const TextStyle(fontSize: 11, color: Color(0xFF6B778C)),
-            ),
-
-            const SizedBox(height: 3),
-
-            Text(
-              value,
-              style: const TextStyle(
-                fontSize: 13,
-                fontWeight: FontWeight.w600,
-                color: Color(0xFF172B4D),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                title,
+                style: const TextStyle(fontSize: 11, color: Color(0xFF6B778C)),
               ),
-            ),
-          ],
+
+              const SizedBox(height: 3),
+
+              Text(
+                value,
+                style: const TextStyle(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w600,
+                  color: Color(0xFF172B4D),
+                ),
+              ),
+            ],
+          ),
         ),
       ],
     );
   }
 
-  Widget _emptyState() {
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.all(30),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            const Icon(
-              Icons.subscriptions_outlined,
-              size: 80,
-              color: Color(0xFFB0BEC5),
-            ),
+  // ----------------------------------------------------------
+  // MANAGE BOTTOM SHEET
+  // ----------------------------------------------------------
 
-            const SizedBox(height: 20),
+  void _showManageBottomSheet(Map<String, dynamic> subscription) {
+    final String documentId = subscription['id'];
+    final String status = subscription['status'];
 
-            const Text(
-              'No Subscriptions Yet',
-              style: TextStyle(
-                fontSize: 21,
-                fontWeight: FontWeight.bold,
-                color: Color(0xFF172B4D),
-              ),
-            ),
-
-            const SizedBox(height: 8),
-
-            const Text(
-              'Subscribe to a service and it will appear here.',
-              textAlign: TextAlign.center,
-              style: TextStyle(fontSize: 14, color: Color(0xFF6B778C)),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  void _showManageDialog(int index) {
-    showDialog(
+    showModalBottomSheet(
       context: context,
+      backgroundColor: Colors.white,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(25)),
+      ),
       builder: (context) {
-        return AlertDialog(
-          title: const Text('Manage Subscription'),
-          content: const Text(
-            'What would you like to do with this subscription?',
+        return SafeArea(
+          child: Padding(
+            padding: const EdgeInsets.fromLTRB(20, 20, 20, 25),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text(
+                  'Manage Subscription',
+                  style: TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold,
+                    color: Color(0xFF172B4D),
+                  ),
+                ),
+
+                const SizedBox(height: 20),
+
+                // PAUSE / RESUME
+                ListTile(
+                  leading: Icon(
+                    status == 'Paused' ? Icons.play_arrow : Icons.pause,
+                    color: const Color(0xFF1565C0),
+                  ),
+                  title: Text(
+                    status == 'Paused'
+                        ? 'Resume Subscription'
+                        : 'Pause Subscription',
+                  ),
+                  onTap: () async {
+                    Navigator.pop(context);
+
+                    await updateSubscriptionStatus(
+                      documentId,
+                      status == 'Paused' ? 'Active' : 'Paused',
+                    );
+                  },
+                ),
+
+                // CANCEL
+                ListTile(
+                  leading: const Icon(Icons.cancel_outlined, color: Colors.red),
+                  title: const Text(
+                    'Cancel Subscription',
+                    style: TextStyle(color: Colors.red),
+                  ),
+                  onTap: () {
+                    Navigator.pop(context);
+
+                    showCancelDialog(documentId);
+                  },
+                ),
+              ],
+            ),
           ),
-          actions: [
-            TextButton(
-              onPressed: () {
-                Navigator.pop(context);
-              },
-              child: const Text('Cancel'),
-            ),
-            TextButton(
-              onPressed: () {
-                setState(() {
-                  subscriptions[index]['status'] = 'Paused';
-                });
-
-                Navigator.pop(context);
-              },
-              child: const Text('Pause'),
-            ),
-            TextButton(
-              onPressed: () {
-                setState(() {
-                  subscriptions.removeAt(index);
-                });
-
-                Navigator.pop(context);
-              },
-              child: const Text('Cancel Subscription'),
-            ),
-          ],
         );
       },
     );

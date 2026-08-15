@@ -16,7 +16,7 @@ void main() {
 
     await tester.pumpWidget(const SubServeApp());
 
-    await tester.pumpWidget(const MyApp());
+    await tester.pumpWidget(const SubServeApp());
 
     // Verify that our counter starts at 0.
     expect(find.text('0'), findsOneWidget);

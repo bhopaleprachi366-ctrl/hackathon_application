@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:hackathon_application/customer_side/deliveries.dart';
 import 'package:hackathon_application/customer_side/homepage.dart';
 import 'package:hackathon_application/customer_side/my_subscriptions.dart';
 import 'package:hackathon_application/customer_side/services.dart';
@@ -16,8 +17,8 @@ class _NavigationPageState extends State<NavigationPage> {
   final List<Widget> pages = const [
     HomePage(),
     ServicesPage(),
-    MySubscriptionsPage(),
-    Center(child: Text('Deliveries')),
+    MySubscriptionPage(),
+    DeliveriesPage(),
     Center(child: Text('Profile')),
   ];
 
