@@ -1,4 +1,7 @@
 import 'package:flutter/material.dart';
+import 'Deliveries.dart';
+import 'subscribers.dart';
+import 'my_service.dart';
 
 class VendorDashboard extends StatelessWidget {
   const VendorDashboard({super.key});
@@ -13,9 +16,7 @@ class VendorDashboard extends StatelessWidget {
         foregroundColor: Colors.black87,
         title: const Text(
           'Vendor Dashboard',
-          style: TextStyle(
-            fontWeight: FontWeight.bold,
-          ),
+          style: TextStyle(fontWeight: FontWeight.bold),
         ),
         actions: [
           IconButton(
@@ -31,24 +32,17 @@ class VendorDashboard extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-
             // Welcome Section
             const Text(
               'Welcome, Vendor 👋',
-              style: TextStyle(
-                fontSize: 24,
-                fontWeight: FontWeight.bold,
-              ),
+              style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
             ),
 
             const SizedBox(height: 6),
 
             const Text(
               'Manage your services and deliveries easily.',
-              style: TextStyle(
-                fontSize: 14,
-                color: Colors.grey,
-              ),
+              style: TextStyle(fontSize: 14, color: Colors.grey),
             ),
 
             const SizedBox(height: 24),
@@ -100,10 +94,7 @@ class VendorDashboard extends StatelessWidget {
 
             const Text(
               'Quick Actions',
-              style: TextStyle(
-                fontSize: 20,
-                fontWeight: FontWeight.bold,
-              ),
+              style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
             ),
 
             const SizedBox(height: 15),
@@ -128,6 +119,12 @@ class VendorDashboard extends StatelessWidget {
               title: 'Add Service',
               subtitle: 'Create a new service',
               onTap: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => const MyServicesPage(),
+                  ),
+                );
                 // Navigate to Add Service
               },
             ),
@@ -141,6 +138,13 @@ class VendorDashboard extends StatelessWidget {
               title: 'Subscribers',
               subtitle: 'View your active subscribers',
               onTap: () {
+                 Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => const SubscribersPage(),
+                  ),
+                );
+                
                 // Navigate to Subscribers
               },
             ),
@@ -154,6 +158,12 @@ class VendorDashboard extends StatelessWidget {
               title: 'Deliveries',
               subtitle: 'Manage upcoming deliveries',
               onTap: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => const DeliveriesPage(),
+                  ),
+                );
                 // Navigate to Deliveries
               },
             ),
@@ -184,27 +194,14 @@ class VendorDashboard extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Icon(
-            icon,
-            size: 28,
-            color: const Color(0xFF4F46E5),
-          ),
+          Icon(icon, size: 28, color: const Color(0xFF2563EB)),
           const SizedBox(height: 12),
           Text(
             value,
-            style: const TextStyle(
-              fontSize: 24,
-              fontWeight: FontWeight.bold,
-            ),
+            style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
           ),
           const SizedBox(height: 4),
-          Text(
-            title,
-            style: const TextStyle(
-              color: Colors.grey,
-              fontSize: 13,
-            ),
-          ),
+          Text(title, style: const TextStyle(color: Colors.grey, fontSize: 13)),
         ],
       ),
     );
@@ -241,11 +238,7 @@ class VendorDashboard extends StatelessWidget {
                 color: const Color(0xFFEEF2FF),
                 borderRadius: BorderRadius.circular(12),
               ),
-              child: Icon(
-                icon,
-                color: const Color(0xFF4F46E5),
-                size: 26,
-              ),
+              child: Icon(icon, color: const Color(0xFFEFF6FF), size: 26),
             ),
 
             const SizedBox(width: 15),
@@ -264,20 +257,13 @@ class VendorDashboard extends StatelessWidget {
                   const SizedBox(height: 4),
                   Text(
                     subtitle,
-                    style: const TextStyle(
-                      fontSize: 13,
-                      color: Colors.grey,
-                    ),
+                    style: const TextStyle(fontSize: 13, color: Colors.grey),
                   ),
                 ],
               ),
             ),
 
-            const Icon(
-              Icons.arrow_forward_ios,
-              size: 16,
-              color: Colors.grey,
-            ),
+            const Icon(Icons.arrow_forward_ios, size: 16, color: Colors.grey),
           ],
         ),
       ),
