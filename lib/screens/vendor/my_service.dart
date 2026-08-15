@@ -75,7 +75,7 @@ class MyServicesPage extends StatelessWidget {
             Expanded(
               child: ListView(
                 children: [
-                  _buildServiceCard (
+                  _buildServiceCard(
                     context,
                     title: 'Home Cleaning',
                     description: 'Professional home cleaning service',
@@ -112,7 +112,7 @@ class MyServicesPage extends StatelessWidget {
   }
 
   Widget _buildServiceCard(
-    BuildContext context,{
+    BuildContext context, {
     required String title,
     required String description,
     required String price,
@@ -126,7 +126,7 @@ class MyServicesPage extends StatelessWidget {
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
+            color: Colors.black.withValues(alpha: 0.05),
             blurRadius: 10,
             offset: const Offset(0, 4),
           ),
@@ -202,16 +202,16 @@ class MyServicesPage extends StatelessWidget {
             onSelected: (value) {
               if (value == 'edit') {
                 Navigator.push(
-                    context,
-                     MaterialPageRoute(
-                      builder: (context) => const EditServicePage(
-                        serviceName: 'Home Cleaning',
-                         category: 'Cleaning',
-                         description: 'Professional home cleaning service',
-                         price: '499',
-                        ),
-                     ),
-                   );                // Edit Service
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => const EditServicePage(
+                      serviceName: 'Home Cleaning',
+                      category: 'Cleaning',
+                      description: 'Professional home cleaning service',
+                      price: '499',
+                    ),
+                  ),
+                ); // Edit Service
               } else if (value == 'delete') {
                 // Delete Service
               }

@@ -26,7 +26,7 @@ Future<void> main() async {
   runApp(const MyApp());
 }
 
-class MyApp extends StatelessWidget {
+class MyApp extends void StatelessWidget {
   const MyApp({super.key});
 
 

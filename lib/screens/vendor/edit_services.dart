@@ -39,14 +39,11 @@ class _EditServicePageState extends State<EditServicePage> {
   void initState() {
     super.initState();
 
-    _serviceNameController =
-        TextEditingController(text: widget.serviceName);
+    _serviceNameController = TextEditingController(text: widget.serviceName);
 
-    _descriptionController =
-        TextEditingController(text: widget.description);
+    _descriptionController = TextEditingController(text: widget.description);
 
-    _priceController =
-        TextEditingController(text: widget.price);
+    _priceController = TextEditingController(text: widget.price);
 
     selectedCategory = widget.category;
   }
@@ -83,9 +80,7 @@ class _EditServicePageState extends State<EditServicePage> {
         foregroundColor: Colors.black87,
         title: const Text(
           'Edit Service',
-          style: TextStyle(
-            fontWeight: FontWeight.bold,
-          ),
+          style: TextStyle(fontWeight: FontWeight.bold),
         ),
       ),
 
@@ -96,23 +91,16 @@ class _EditServicePageState extends State<EditServicePage> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-
               const Text(
                 'Edit Service Details',
-                style: TextStyle(
-                  fontSize: 24,
-                  fontWeight: FontWeight.bold,
-                ),
+                style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
               ),
 
               const SizedBox(height: 6),
 
               const Text(
                 'Update your service information.',
-                style: TextStyle(
-                  fontSize: 14,
-                  color: Colors.grey,
-                ),
+                style: TextStyle(fontSize: 14, color: Colors.grey),
               ),
 
               const SizedBox(height: 25),
@@ -144,7 +132,7 @@ class _EditServicePageState extends State<EditServicePage> {
               const SizedBox(height: 8),
 
               DropdownButtonFormField<String>(
-                value: selectedCategory,
+                initialValue: selectedCategory,
                 decoration: _inputDecoration(
                   hintText: 'Select category',
                   icon: Icons.category_outlined,
@@ -227,17 +215,12 @@ class _EditServicePageState extends State<EditServicePage> {
                   icon: const Icon(Icons.check),
                   label: const Text(
                     'Update Service',
-                    style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
-                    ),
+                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
                   ),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: const Color(0xFF2563EB),
                     foregroundColor: Colors.white,
-                    padding: const EdgeInsets.symmetric(
-                      vertical: 16,
-                    ),
+                    padding: const EdgeInsets.symmetric(vertical: 16),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(12),
                     ),
@@ -256,10 +239,7 @@ class _EditServicePageState extends State<EditServicePage> {
   Widget _buildLabel(String text) {
     return Text(
       text,
-      style: const TextStyle(
-        fontSize: 15,
-        fontWeight: FontWeight.bold,
-      ),
+      style: const TextStyle(fontSize: 15, fontWeight: FontWeight.bold),
     );
   }
 
@@ -269,26 +249,17 @@ class _EditServicePageState extends State<EditServicePage> {
   }) {
     return InputDecoration(
       hintText: hintText,
-      suffixIcon: Icon(
-        icon,
-        color: const Color(0xFF2563EB),
-      ),
+      suffixIcon: Icon(icon, color: const Color(0xFF2563EB)),
       filled: true,
       fillColor: Colors.white,
-      contentPadding: const EdgeInsets.symmetric(
-        horizontal: 16,
-        vertical: 16,
-      ),
+      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
       border: OutlineInputBorder(
         borderRadius: BorderRadius.circular(12),
         borderSide: BorderSide.none,
       ),
       focusedBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(12),
-        borderSide: const BorderSide(
-          color: Color(0xFF2563EB),
-          width: 1.5,
-        ),
+        borderSide: const BorderSide(color: Color(0xFF2563EB), width: 1.5),
       ),
     );
   }
