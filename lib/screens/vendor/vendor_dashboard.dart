@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'Deliveries.dart';
 import 'subscribers.dart';
-import 'my_service.dart';
+import 'my_service.dart' hide Expanded;
 
 class VendorDashboard extends StatelessWidget {
   const VendorDashboard({super.key});
@@ -138,13 +138,13 @@ class VendorDashboard extends StatelessWidget {
               title: 'Subscribers',
               subtitle: 'View your active subscribers',
               onTap: () {
-                 Navigator.push(
+                Navigator.push(
                   context,
                   MaterialPageRoute(
                     builder: (context) => const SubscribersPage(),
                   ),
                 );
-                
+
                 // Navigate to Subscribers
               },
             ),
@@ -185,7 +185,7 @@ class VendorDashboard extends StatelessWidget {
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
+            color: Colors.black.withValues(alpha: 0.05),
             blurRadius: 10,
             offset: const Offset(0, 4),
           ),
@@ -224,7 +224,7 @@ class VendorDashboard extends StatelessWidget {
           borderRadius: BorderRadius.circular(16),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.05),
+              color: Colors.black.withValues(alpha: 0.05),
               blurRadius: 10,
               offset: const Offset(0, 4),
             ),

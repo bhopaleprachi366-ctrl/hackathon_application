@@ -13,9 +13,9 @@ class _DeliveriesPageState extends State<DeliveriesPage> {
 
   final List<String> filters = ['All', 'Upcoming', 'Delivered'];
 
-  // ----------------------------------------------------------
-  // FIREBASE - GET DELIVERIES
-  // ----------------------------------------------------------
+  // ==========================================================
+  // GET DELIVERIES FROM FIRESTORE
+  // ==========================================================
 
   Stream<List<Map<String, dynamic>>> getDeliveries() {
     return FirebaseFirestore.instance
@@ -32,6 +32,9 @@ class _DeliveriesPageState extends State<DeliveriesPage> {
               'deliveryDate': data['deliveryDate'],
               'quantity': data['quantity'] ?? 1,
               'serviceId': data['serviceId'] ?? '',
+              'serviceName': data['serviceName'] ?? 'Service',
+              'category': data['category'] ?? 'Service',
+              'unit': data['unit'] ?? '',
               'status': data['status'] ?? 'scheduled',
               'subscriptionId': data['subscriptionId'] ?? '',
               'userId': data['userId'] ?? '',
@@ -41,11 +44,11 @@ class _DeliveriesPageState extends State<DeliveriesPage> {
         });
   }
 
-  // ----------------------------------------------------------
-  // CONVERT FIREBASE TIMESTAMP
-  // ----------------------------------------------------------
+  // ==========================================================
+  // CONVERT FIRESTORE TIMESTAMP TO DATETIME
+  // ==========================================================
 
-  DateTime? _getDeliveryDate(dynamic value) {
+  DateTime? _getDateTime(dynamic value) {
     if (value is Timestamp) {
       return value.toDate();
     }
@@ -57,12 +60,12 @@ class _DeliveriesPageState extends State<DeliveriesPage> {
     return null;
   }
 
-  // ----------------------------------------------------------
+  // ==========================================================
   // FORMAT DATE
-  // ----------------------------------------------------------
+  // ==========================================================
 
   String _formatDate(dynamic value) {
-    final date = _getDeliveryDate(value);
+    final date = _getDateTime(value);
 
     if (date == null) {
       return 'Not scheduled';
@@ -73,12 +76,12 @@ class _DeliveriesPageState extends State<DeliveriesPage> {
         '${date.year}';
   }
 
-  // ----------------------------------------------------------
+  // ==========================================================
   // FORMAT TIME
-  // ----------------------------------------------------------
+  // ==========================================================
 
   String _formatTime(dynamic value) {
-    final date = _getDeliveryDate(value);
+    final date = _getDateTime(value);
 
     if (date == null) {
       return 'Not available';
@@ -94,13 +97,16 @@ class _DeliveriesPageState extends State<DeliveriesPage> {
     return '$displayHour:$minute $period';
   }
 
-  // ----------------------------------------------------------
+  // ==========================================================
   // STATUS
-  // ----------------------------------------------------------
+  // ==========================================================
 
   String _displayStatus(String status) {
     switch (status.toLowerCase()) {
       case 'scheduled':
+        return 'Upcoming';
+
+      case 'upcoming':
         return 'Upcoming';
 
       case 'delivered':
@@ -117,18 +123,18 @@ class _DeliveriesPageState extends State<DeliveriesPage> {
     }
   }
 
-  // ----------------------------------------------------------
+  // ==========================================================
   // BUILD
-  // ----------------------------------------------------------
+  // ==========================================================
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color(0xFFF5F9FC),
 
-      // ------------------------------------------------------
+      // ======================================================
       // APP BAR
-      // ------------------------------------------------------
+      // ======================================================
       appBar: AppBar(
         backgroundColor: const Color(0xFF1565C0),
         elevation: 0,
@@ -143,31 +149,61 @@ class _DeliveriesPageState extends State<DeliveriesPage> {
         ),
       ),
 
-      // ------------------------------------------------------
-      // FIREBASE STREAM
-      // ------------------------------------------------------
+      // ======================================================
+      // FIRESTORE STREAM
+      // ======================================================
       body: StreamBuilder<List<Map<String, dynamic>>>(
         stream: getDeliveries(),
         builder: (context, snapshot) {
-          // Loading
+          // --------------------------------------------------
+          // LOADING
+          // --------------------------------------------------
+
           if (snapshot.connectionState == ConnectionState.waiting) {
             return const Center(
               child: CircularProgressIndicator(color: Color(0xFF1565C0)),
             );
           }
 
-          // Error
+          // --------------------------------------------------
+          // ERROR
+          // --------------------------------------------------
+
           if (snapshot.hasError) {
             return Center(
               child: Padding(
                 padding: const EdgeInsets.all(20),
-                child: Text(
-                  'Something went wrong.\n\n${snapshot.error}',
-                  textAlign: TextAlign.center,
-                  style: const TextStyle(
-                    color: Color(0xFF6B778C),
-                    fontSize: 15,
-                  ),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    const Icon(
+                      Icons.error_outline,
+                      color: Colors.red,
+                      size: 55,
+                    ),
+
+                    const SizedBox(height: 15),
+
+                    const Text(
+                      'Something went wrong',
+                      style: TextStyle(
+                        fontSize: 19,
+                        fontWeight: FontWeight.bold,
+                        color: Color(0xFF172B4D),
+                      ),
+                    ),
+
+                    const SizedBox(height: 10),
+
+                    Text(
+                      '${snapshot.error}',
+                      textAlign: TextAlign.center,
+                      style: const TextStyle(
+                        color: Color(0xFF6B778C),
+                        fontSize: 14,
+                      ),
+                    ),
+                  ],
                 ),
               ),
             );
@@ -176,7 +212,7 @@ class _DeliveriesPageState extends State<DeliveriesPage> {
           final deliveries = snapshot.data ?? [];
 
           // --------------------------------------------------
-          // FILTER DELIVERIES
+          // FILTER
           // --------------------------------------------------
 
           final filteredDeliveries = deliveries.where((delivery) {
@@ -191,9 +227,9 @@ class _DeliveriesPageState extends State<DeliveriesPage> {
 
           return Column(
             children: [
-              // ------------------------------------------------
+              // =================================================
               // FILTER BUTTONS
-              // ------------------------------------------------
+              // =================================================
               SizedBox(
                 height: 65,
                 child: ListView.builder(
@@ -205,7 +241,8 @@ class _DeliveriesPageState extends State<DeliveriesPage> {
                   itemCount: filters.length,
                   itemBuilder: (context, index) {
                     final filter = filters[index];
-                    final isSelected = selectedFilter == filter;
+
+                    final bool isSelected = selectedFilter == filter;
 
                     return GestureDetector(
                       onTap: () {
@@ -248,9 +285,9 @@ class _DeliveriesPageState extends State<DeliveriesPage> {
                 ),
               ),
 
-              // ------------------------------------------------
+              // =================================================
               // DELIVERY COUNT
-              // ------------------------------------------------
+              // =================================================
               Padding(
                 padding: const EdgeInsets.symmetric(
                   horizontal: 16,
@@ -270,9 +307,9 @@ class _DeliveriesPageState extends State<DeliveriesPage> {
                 ),
               ),
 
-              // ------------------------------------------------
+              // =================================================
               // DELIVERY LIST
-              // ------------------------------------------------
+              // =================================================
               Expanded(
                 child: filteredDeliveries.isEmpty
                     ? _emptyState()
@@ -280,9 +317,7 @@ class _DeliveriesPageState extends State<DeliveriesPage> {
                         padding: const EdgeInsets.fromLTRB(16, 5, 16, 20),
                         itemCount: filteredDeliveries.length,
                         itemBuilder: (context, index) {
-                          final delivery = filteredDeliveries[index];
-
-                          return _deliveryCard(delivery: delivery);
+                          return _deliveryCard(filteredDeliveries[index]);
                         },
                       ),
               ),
@@ -293,9 +328,9 @@ class _DeliveriesPageState extends State<DeliveriesPage> {
     );
   }
 
-  // ----------------------------------------------------------
+  // ==========================================================
   // EMPTY STATE
-  // ----------------------------------------------------------
+  // ==========================================================
 
   Widget _emptyState() {
     return Center(
@@ -342,14 +377,12 @@ class _DeliveriesPageState extends State<DeliveriesPage> {
     );
   }
 
-  // ----------------------------------------------------------
+  // ==========================================================
   // DELIVERY CARD
-  // ----------------------------------------------------------
+  // ==========================================================
 
-  Widget _deliveryCard({required Map<String, dynamic> delivery}) {
-    final String rawStatus = delivery['status'].toString();
-
-    final String status = _displayStatus(rawStatus);
+  Widget _deliveryCard(Map<String, dynamic> delivery) {
+    final String status = _displayStatus(delivery['status'].toString());
 
     final bool isDelivered = status == 'Delivered';
     final bool isCancelled = status == 'Cancelled';
@@ -368,12 +401,11 @@ class _DeliveriesPageState extends State<DeliveriesPage> {
           ),
         ],
       ),
-
       child: Column(
         children: [
-          // ----------------------------------------------------
+          // ====================================================
           // HEADER
-          // ----------------------------------------------------
+          // ====================================================
           Row(
             children: [
               Container(
@@ -396,9 +428,11 @@ class _DeliveriesPageState extends State<DeliveriesPage> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Text(
-                      'Delivery',
-                      style: TextStyle(
+                    Text(
+                      delivery['serviceName'].toString(),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: const TextStyle(
                         fontSize: 18,
                         fontWeight: FontWeight.bold,
                         color: Color(0xFF172B4D),
@@ -408,9 +442,7 @@ class _DeliveriesPageState extends State<DeliveriesPage> {
                     const SizedBox(height: 5),
 
                     Text(
-                      'Service ID: ${delivery['serviceId'].toString().isEmpty ? 'Not assigned' : delivery['serviceId']}',
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
+                      delivery['category'].toString(),
                       style: const TextStyle(
                         fontSize: 12,
                         color: Color(0xFF6B778C),
@@ -420,7 +452,7 @@ class _DeliveriesPageState extends State<DeliveriesPage> {
                     const SizedBox(height: 6),
 
                     Text(
-                      'Quantity: ${delivery['quantity']}',
+                      'Quantity: ${delivery['quantity']} ${delivery['unit']}',
                       style: const TextStyle(
                         fontSize: 13,
                         color: Color(0xFF172B4D),
@@ -441,9 +473,9 @@ class _DeliveriesPageState extends State<DeliveriesPage> {
 
           const SizedBox(height: 15),
 
-          // ----------------------------------------------------
+          // ====================================================
           // DATE + TIME
-          // ----------------------------------------------------
+          // ====================================================
           Row(
             children: [
               Expanded(
@@ -453,6 +485,8 @@ class _DeliveriesPageState extends State<DeliveriesPage> {
                   _formatDate(delivery['deliveryDate']),
                 ),
               ),
+
+              const SizedBox(width: 10),
 
               Expanded(
                 child: _infoItem(
@@ -466,9 +500,9 @@ class _DeliveriesPageState extends State<DeliveriesPage> {
 
           const SizedBox(height: 15),
 
-          // ----------------------------------------------------
-          // SUBSCRIPTION ID
-          // ----------------------------------------------------
+          // ====================================================
+          // SUBSCRIPTION
+          // ====================================================
           Container(
             width: double.infinity,
             padding: const EdgeInsets.all(12),
@@ -497,7 +531,7 @@ class _DeliveriesPageState extends State<DeliveriesPage> {
                   child: Text(
                     delivery['subscriptionId'].toString().isEmpty
                         ? 'Not assigned'
-                        : delivery['subscriptionId'],
+                        : delivery['subscriptionId'].toString(),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                     style: const TextStyle(
@@ -513,9 +547,9 @@ class _DeliveriesPageState extends State<DeliveriesPage> {
 
           const SizedBox(height: 15),
 
-          // ----------------------------------------------------
+          // ====================================================
           // ACTION
-          // ----------------------------------------------------
+          // ====================================================
           if (!isDelivered && !isCancelled)
             SizedBox(
               width: double.infinity,
@@ -562,9 +596,9 @@ class _DeliveriesPageState extends State<DeliveriesPage> {
     );
   }
 
-  // ----------------------------------------------------------
+  // ==========================================================
   // STATUS BADGE
-  // ----------------------------------------------------------
+  // ==========================================================
 
   Widget _statusBadge(String status) {
     Color backgroundColor;
@@ -608,9 +642,9 @@ class _DeliveriesPageState extends State<DeliveriesPage> {
     );
   }
 
-  // ----------------------------------------------------------
+  // ==========================================================
   // INFO ITEM
-  // ----------------------------------------------------------
+  // ==========================================================
 
   Widget _infoItem(IconData icon, String title, String value) {
     return Row(
@@ -647,21 +681,20 @@ class _DeliveriesPageState extends State<DeliveriesPage> {
     );
   }
 
-  // ----------------------------------------------------------
-  // DELIVERY DETAILS DIALOG
-  // ----------------------------------------------------------
+  // ==========================================================
+  // DELIVERY DETAILS
+  // ==========================================================
 
   void _showDeliveryDetails(Map<String, dynamic> delivery) {
-    final status = _displayStatus(delivery['status'].toString());
+    final String status = _displayStatus(delivery['status'].toString());
 
     showDialog(
       context: context,
-      builder: (context) {
+      builder: (dialogContext) {
         return AlertDialog(
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(18),
           ),
-
           title: const Text(
             'Delivery Details',
             style: TextStyle(
@@ -669,11 +702,14 @@ class _DeliveriesPageState extends State<DeliveriesPage> {
               color: Color(0xFF172B4D),
             ),
           ),
-
           content: Column(
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
+              _dialogRow('Service', delivery['serviceName'].toString()),
+
+              const SizedBox(height: 12),
+
               _dialogRow('Status', status),
 
               const SizedBox(height: 12),
@@ -686,7 +722,10 @@ class _DeliveriesPageState extends State<DeliveriesPage> {
 
               const SizedBox(height: 12),
 
-              _dialogRow('Quantity', '${delivery['quantity']}'),
+              _dialogRow(
+                'Quantity',
+                '${delivery['quantity']} ${delivery['unit']}',
+              ),
 
               const SizedBox(height: 12),
 
@@ -694,15 +733,14 @@ class _DeliveriesPageState extends State<DeliveriesPage> {
                 'Service ID',
                 delivery['serviceId'].toString().isEmpty
                     ? 'Not assigned'
-                    : delivery['serviceId'],
+                    : delivery['serviceId'].toString(),
               ),
             ],
           ),
-
           actions: [
             TextButton(
               onPressed: () {
-                Navigator.pop(context);
+                Navigator.pop(dialogContext);
               },
               child: const Text(
                 'Close',
@@ -715,9 +753,9 @@ class _DeliveriesPageState extends State<DeliveriesPage> {
     );
   }
 
-  // ----------------------------------------------------------
+  // ==========================================================
   // DIALOG ROW
-  // ----------------------------------------------------------
+  // ==========================================================
 
   Widget _dialogRow(String title, String value) {
     return Row(

@@ -1,16 +1,10 @@
 import 'package:flutter/material.dart';
-<<<<<<< HEAD
 import 'package:hackathon_application/customer_side/deliveries.dart';
 import 'package:hackathon_application/customer_side/homepage.dart';
 import 'package:hackathon_application/customer_side/my_subscriptions.dart';
 import 'package:hackathon_application/customer_side/services.dart';
-=======
 
-import 'package:hackathon_application/customer_side/homepage.dart';
-import 'package:hackathon_application/customer_side/my_subscriptions.dart';
-import 'package:hackathon_application/customer_side/services.dart';
 import 'package:hackathon_application/customer_side/profile_page.dart';
->>>>>>> dcbf4c8294c70fc1bf7432787d0ed95fc8c40f02
 
 class NavigationPage extends StatefulWidget {
   const NavigationPage({super.key});
@@ -26,15 +20,10 @@ class _NavigationPageState extends State<NavigationPage> {
     HomePage(),
     ServicesPage(),
     MySubscriptionsPage(),
-<<<<<<< HEAD
     DeliveriesPage(),
     Center(child: Text('Profile')),
-=======
-    Center(
-      child: Text('Deliveries'),
-    ),
+    Center(child: Text('Deliveries')),
     ProfilePage(),
->>>>>>> dcbf4c8294c70fc1bf7432787d0ed95fc8c40f02
   ];
 
   @override

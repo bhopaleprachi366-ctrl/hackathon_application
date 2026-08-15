@@ -57,12 +57,13 @@ class _ProfilePageState extends State<ProfilePage> {
         return;
       }
 
-      DocumentSnapshot document =
-          await _firestore.collection("users").doc(user.uid).get();
+      DocumentSnapshot document = await _firestore
+          .collection("users")
+          .doc(user.uid)
+          .get();
 
       if (document.exists) {
-        Map<String, dynamic> data =
-            document.data() as Map<String, dynamic>;
+        Map<String, dynamic> data = document.data() as Map<String, dynamic>;
 
         nameController.text = data["name"] ?? "";
         phoneController.text = data["phone"] ?? "";
@@ -86,11 +87,9 @@ class _ProfilePageState extends State<ProfilePage> {
       });
 
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text("Failed to load profile: $e"),
-          ),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text("Failed to load profile: $e")));
       }
     }
   }
@@ -117,11 +116,9 @@ class _ProfilePageState extends State<ProfilePage> {
       await uploadToCloudinary(File(pickedImage.path));
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text("Image selection failed: $e"),
-          ),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text("Image selection failed: $e")));
       }
     } finally {
       if (mounted) {
@@ -148,25 +145,18 @@ class _ProfilePageState extends State<ProfilePage> {
     );
 
     try {
-      var request = http.MultipartRequest(
-        "POST",
-        url,
-      );
+      var request = http.MultipartRequest("POST", url);
 
       request.fields["upload_preset"] = uploadPreset;
       request.fields["folder"] = "subserve/profile/${user.uid}";
 
       request.files.add(
-        await http.MultipartFile.fromPath(
-          "file",
-          imageFile.path,
-        ),
+        await http.MultipartFile.fromPath("file", imageFile.path),
       );
 
       var response = await request.send();
 
-      final responseData =
-          await response.stream.bytesToString();
+      final responseData = await response.stream.bytesToString();
 
       if (response.statusCode == 200) {
         final data = jsonDecode(responseData);
@@ -183,23 +173,17 @@ class _ProfilePageState extends State<ProfilePage> {
 
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text("Profile photo updated"),
-            ),
+            const SnackBar(content: Text("Profile photo updated")),
           );
         }
       } else {
-        throw Exception(
-          "Cloudinary upload failed: $responseData",
-        );
+        throw Exception("Cloudinary upload failed: $responseData");
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text("Upload failed: $e"),
-          ),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text("Upload failed: $e")));
       }
     }
   }
@@ -218,11 +202,9 @@ class _ProfilePageState extends State<ProfilePage> {
     if (nameController.text.trim().isEmpty ||
         phoneController.text.trim().isEmpty ||
         addressController.text.trim().isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text("Please fill all fields"),
-        ),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text("Please fill all fields")));
 
       return;
     }
@@ -240,18 +222,14 @@ class _ProfilePageState extends State<ProfilePage> {
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text("Profile updated successfully"),
-          ),
+          const SnackBar(content: Text("Profile updated successfully")),
         );
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text("Failed to update profile: $e"),
-          ),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text("Failed to update profile: $e")));
       }
     } finally {
       if (mounted) {
@@ -273,9 +251,7 @@ class _ProfilePageState extends State<ProfilePage> {
       return;
     }
 
-    Navigator.of(context).popUntil(
-      (route) => route.isFirst,
-    );
+    Navigator.of(context).popUntil((route) => route.isFirst);
   }
 
   @override
@@ -293,19 +269,10 @@ class _ProfilePageState extends State<ProfilePage> {
 
   Widget profileImage() {
     if (imageUrl.isNotEmpty) {
-      return CircleAvatar(
-        radius: 58,
-        backgroundImage: NetworkImage(imageUrl),
-      );
+      return CircleAvatar(radius: 58, backgroundImage: NetworkImage(imageUrl));
     }
 
-    return const CircleAvatar(
-      radius: 58,
-      child: Icon(
-        Icons.person,
-        size: 65,
-      ),
-    );
+    return const CircleAvatar(radius: 58, child: Icon(Icons.person, size: 65));
   }
 
   // --------------------------------------------------
@@ -315,17 +282,11 @@ class _ProfilePageState extends State<ProfilePage> {
   @override
   Widget build(BuildContext context) {
     if (isLoading) {
-      return const Scaffold(
-        body: Center(
-          child: CircularProgressIndicator(),
-        ),
-      );
+      return const Scaffold(body: Center(child: CircularProgressIndicator()));
     }
 
     return Scaffold(
-      appBar: AppBar(
-        title: const Text("My Profile"),
-      ),
+      appBar: AppBar(title: const Text("My Profile")),
 
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(20),
@@ -343,19 +304,15 @@ class _ProfilePageState extends State<ProfilePage> {
                   bottom: 0,
                   right: 0,
                   child: GestureDetector(
-                    onTap: isUploadingImage
-                        ? null
-                        : pickImage,
+                    onTap: isUploadingImage ? null : pickImage,
                     child: CircleAvatar(
                       radius: 20,
-                      backgroundColor:
-                          AppColors.primary,
+                      backgroundColor: AppColors.primary,
                       child: isUploadingImage
                           ? const SizedBox(
                               height: 18,
                               width: 18,
-                              child:
-                                  CircularProgressIndicator(
+                              child: CircularProgressIndicator(
                                 strokeWidth: 2,
                                 color: Colors.white,
                               ),
@@ -377,31 +334,20 @@ class _ProfilePageState extends State<ProfilePage> {
               nameController.text.isEmpty
                   ? "SubServe User"
                   : nameController.text,
-              style: const TextStyle(
-                fontSize: 24,
-                fontWeight: FontWeight.bold,
-              ),
+              style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
             ),
 
             const SizedBox(height: 5),
 
-            Text(
-              email,
-              style: const TextStyle(
-                color: AppColors.textSecondary,
-              ),
-            ),
+            Text(email, style: const TextStyle(color: AppColors.textSecondary)),
 
             const SizedBox(height: 8),
 
             // ROLE
             Container(
-              padding: const EdgeInsets.symmetric(
-                horizontal: 14,
-                vertical: 6,
-              ),
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
               decoration: BoxDecoration(
-                color: AppColors.accent.withOpacity(0.2),
+                color: AppColors.accent.withValues(alpha: 0.2),
                 borderRadius: BorderRadius.circular(20),
               ),
               child: Text(
@@ -421,10 +367,7 @@ class _ProfilePageState extends State<ProfilePage> {
               alignment: Alignment.centerLeft,
               child: Text(
                 "Personal Information",
-                style: TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
-                ),
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
               ),
             ),
 
@@ -465,9 +408,7 @@ class _ProfilePageState extends State<ProfilePage> {
             // EMAIL - READ ONLY
             TextField(
               readOnly: true,
-              controller: TextEditingController(
-                text: email,
-              ),
+              controller: TextEditingController(text: email),
               decoration: const InputDecoration(
                 labelText: "Email",
                 prefixIcon: Icon(Icons.email_outlined),
@@ -480,26 +421,19 @@ class _ProfilePageState extends State<ProfilePage> {
             SizedBox(
               width: double.infinity,
               child: ElevatedButton.icon(
-                onPressed: isSaving
-                    ? null
-                    : saveProfile,
+                onPressed: isSaving ? null : saveProfile,
                 icon: isSaving
                     ? const SizedBox(
                         height: 18,
                         width: 18,
-                        child:
-                            CircularProgressIndicator(
+                        child: CircularProgressIndicator(
                           strokeWidth: 2,
                           color: Colors.white,
                         ),
                       )
                     : const Icon(Icons.save),
 
-                label: Text(
-                  isSaving
-                      ? "Saving..."
-                      : "Save Changes",
-                ),
+                label: Text(isSaving ? "Saving..." : "Save Changes"),
               ),
             ),
 
@@ -510,15 +444,10 @@ class _ProfilePageState extends State<ProfilePage> {
               width: double.infinity,
               child: OutlinedButton.icon(
                 onPressed: logout,
-                icon: const Icon(
-                  Icons.logout,
-                  color: AppColors.error,
-                ),
+                icon: const Icon(Icons.logout, color: AppColors.error),
                 label: const Text(
                   "Logout",
-                  style: TextStyle(
-                    color: AppColors.error,
-                  ),
+                  style: TextStyle(color: AppColors.error),
                 ),
               ),
             ),

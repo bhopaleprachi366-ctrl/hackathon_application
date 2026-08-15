@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 
 class MySubscriptionsPage extends StatefulWidget {
   const MySubscriptionsPage({super.key});
@@ -10,51 +11,73 @@ class MySubscriptionsPage extends StatefulWidget {
 
 class _MySubscriptionsPageState extends State<MySubscriptionsPage> {
   // ----------------------------------------------------------
-  // GET SUBSCRIPTIONS FROM FIRESTORE
+  // GET USER SUBSCRIPTIONS
   // ----------------------------------------------------------
-  Stream<List<Map<String, dynamic>>> getSubscriptions() {
+
+  Stream<QuerySnapshot<Map<String, dynamic>>> getSubscriptions() {
+    final User? user = FirebaseAuth.instance.currentUser;
+
+    if (user == null) {
+      return const Stream.empty();
+    }
+
     return FirebaseFirestore.instance
         .collection('subscriptions')
-        .snapshots()
-        .map((snapshot) {
-          return snapshot.docs.map((doc) {
-            final data = doc.data();
+        .where('userId', isEqualTo: user.uid)
+        .snapshots();
+  }
 
-            return {
-              'id': doc.id,
-              'name': data['serviceName'] ?? 'Service',
-              'category': data['category'] ?? 'Category',
-              'price': data['price'] ?? 0,
-              'unit': data['unit'] ?? '',
-              'quantity': data['quantity'] ?? 1,
-              'frequency': data['frequency'] ?? 'Daily',
-              'status': data['status'] ?? 'Active',
-              'nextDelivery': data['nextDelivery'] ?? 'Not scheduled',
-              'address': data['address'] ?? '',
-              'icon': _getServiceIcon(data['category']),
-            };
-          }).toList();
-        });
+  // ----------------------------------------------------------
+  // FORMAT DATE
+  // ----------------------------------------------------------
+
+  String formatDate(dynamic value) {
+    if (value == null) {
+      return 'Not scheduled';
+    }
+
+    DateTime? date;
+
+    if (value is Timestamp) {
+      date = value.toDate();
+    } else if (value is DateTime) {
+      date = value;
+    } else if (value is String) {
+      try {
+        date = DateTime.parse(value);
+      } catch (_) {
+        return value;
+      }
+    }
+
+    if (date == null) {
+      return 'Not scheduled';
+    }
+
+    return '${date.day.toString().padLeft(2, '0')}/'
+        '${date.month.toString().padLeft(2, '0')}/'
+        '${date.year}';
   }
 
   // ----------------------------------------------------------
   // SERVICE ICON
   // ----------------------------------------------------------
-  IconData _getServiceIcon(dynamic category) {
-    switch (category?.toString()) {
-      case 'Dairy':
+
+  IconData getServiceIcon(dynamic category) {
+    switch (category?.toString().toLowerCase()) {
+      case 'dairy':
         return Icons.local_drink_outlined;
 
-      case 'Water':
+      case 'water':
         return Icons.water_drop_outlined;
 
-      case 'Food':
+      case 'food':
         return Icons.restaurant_outlined;
 
-      case 'Newspaper':
+      case 'newspaper':
         return Icons.menu_book_outlined;
 
-      case 'Vegetables':
+      case 'vegetables':
         return Icons.eco_outlined;
 
       default:
@@ -65,6 +88,7 @@ class _MySubscriptionsPageState extends State<MySubscriptionsPage> {
   // ----------------------------------------------------------
   // UPDATE STATUS
   // ----------------------------------------------------------
+
   Future<void> updateSubscriptionStatus(
     String documentId,
     String newStatus,
@@ -99,8 +123,9 @@ class _MySubscriptionsPageState extends State<MySubscriptionsPage> {
   }
 
   // ----------------------------------------------------------
-  // CANCEL SUBSCRIPTION
+  // CANCEL
   // ----------------------------------------------------------
+
   Future<void> cancelSubscription(String documentId) async {
     try {
       await FirebaseFirestore.instance
@@ -126,17 +151,21 @@ class _MySubscriptionsPageState extends State<MySubscriptionsPage> {
   }
 
   // ----------------------------------------------------------
-  // CANCEL CONFIRMATION
+  // CANCEL DIALOG
   // ----------------------------------------------------------
+
   void showCancelDialog(String documentId) {
     showDialog(
       context: context,
+
       builder: (dialogContext) {
         return AlertDialog(
           title: const Text('Cancel Subscription'),
+
           content: const Text(
             'Are you sure you want to cancel this subscription?',
           ),
+
           actions: [
             TextButton(
               onPressed: () {
@@ -144,16 +173,19 @@ class _MySubscriptionsPageState extends State<MySubscriptionsPage> {
               },
               child: const Text('No'),
             ),
+
             ElevatedButton(
               onPressed: () async {
                 Navigator.pop(dialogContext);
 
                 await cancelSubscription(documentId);
               },
+
               style: ElevatedButton.styleFrom(
                 backgroundColor: Colors.red,
                 foregroundColor: Colors.white,
               ),
+
               child: const Text('Yes, Cancel'),
             ),
           ],
@@ -165,18 +197,17 @@ class _MySubscriptionsPageState extends State<MySubscriptionsPage> {
   // ----------------------------------------------------------
   // BUILD
   // ----------------------------------------------------------
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color(0xFFF5F9FC),
 
-      // ------------------------------------------------------
-      // APP BAR
-      // ------------------------------------------------------
       appBar: AppBar(
         backgroundColor: const Color(0xFF1565C0),
         elevation: 0,
         automaticallyImplyLeading: false,
+
         title: const Text(
           'My Subscriptions',
           style: TextStyle(
@@ -187,33 +218,35 @@ class _MySubscriptionsPageState extends State<MySubscriptionsPage> {
         ),
       ),
 
-      // ------------------------------------------------------
-      // FIRESTORE STREAM
-      // ------------------------------------------------------
-      body: StreamBuilder<List<Map<String, dynamic>>>(
+      body: StreamBuilder<QuerySnapshot<Map<String, dynamic>>>(
         stream: getSubscriptions(),
+
         builder: (context, snapshot) {
-          // Loading
+          // LOADING
           if (snapshot.connectionState == ConnectionState.waiting) {
             return const Center(
               child: CircularProgressIndicator(color: Color(0xFF1565C0)),
             );
           }
 
-          // Error
+          // ERROR
           if (snapshot.hasError) {
             return Center(
               child: Padding(
                 padding: const EdgeInsets.all(20),
+
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
+
                   children: [
                     const Icon(
                       Icons.error_outline,
                       color: Colors.red,
                       size: 55,
                     ),
+
                     const SizedBox(height: 15),
+
                     const Text(
                       'Something went wrong',
                       style: TextStyle(
@@ -222,14 +255,13 @@ class _MySubscriptionsPageState extends State<MySubscriptionsPage> {
                         color: Color(0xFF172B4D),
                       ),
                     ),
+
                     const SizedBox(height: 10),
+
                     Text(
                       '${snapshot.error}',
                       textAlign: TextAlign.center,
-                      style: const TextStyle(
-                        color: Color(0xFF6B778C),
-                        fontSize: 14,
-                      ),
+                      style: const TextStyle(color: Color(0xFF6B778C)),
                     ),
                   ],
                 ),
@@ -237,19 +269,23 @@ class _MySubscriptionsPageState extends State<MySubscriptionsPage> {
             );
           }
 
-          final subscriptions = snapshot.data ?? [];
+          final docs = snapshot.data?.docs ?? [];
 
-          // Empty
-          if (subscriptions.isEmpty) {
+          // EMPTY
+          if (docs.isEmpty) {
             return _emptyState();
           }
 
-          // List
+          // LIST
           return ListView.builder(
             padding: const EdgeInsets.fromLTRB(16, 18, 16, 25),
-            itemCount: subscriptions.length,
+
+            itemCount: docs.length,
+
             itemBuilder: (context, index) {
-              return _subscriptionCard(subscriptions[index]);
+              final data = docs[index].data();
+
+              return _subscriptionCard(docs[index].id, data);
             },
           );
         },
@@ -260,20 +296,25 @@ class _MySubscriptionsPageState extends State<MySubscriptionsPage> {
   // ----------------------------------------------------------
   // EMPTY STATE
   // ----------------------------------------------------------
+
   Widget _emptyState() {
     return Center(
       child: Padding(
         padding: const EdgeInsets.all(30),
+
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
+
           children: [
             Container(
               height: 90,
               width: 90,
+
               decoration: BoxDecoration(
                 color: const Color(0xFFE8F1FB),
                 borderRadius: BorderRadius.circular(25),
               ),
+
               child: const Icon(
                 Icons.subscriptions_outlined,
                 size: 45,
@@ -308,19 +349,35 @@ class _MySubscriptionsPageState extends State<MySubscriptionsPage> {
   // ----------------------------------------------------------
   // SUBSCRIPTION CARD
   // ----------------------------------------------------------
-  Widget _subscriptionCard(Map<String, dynamic> subscription) {
-    final String documentId = subscription['id']?.toString() ?? '';
 
-    final String status = subscription['status']?.toString() ?? 'Active';
+  Widget _subscriptionCard(String documentId, Map<String, dynamic> data) {
+    final String name = data['serviceName']?.toString() ?? 'Service';
+
+    final String category = data['category']?.toString() ?? 'Category';
+
+    final String unit = data['unit']?.toString() ?? '';
+
+    final String frequency = data['frequency']?.toString() ?? 'Daily';
+
+    final String status = data['status']?.toString() ?? 'Active';
+
+    final int price = (data['price'] as num?)?.toInt() ?? 0;
+
+    final int quantity = (data['quantity'] as num?)?.toInt() ?? 1;
+
+    final String nextDelivery = formatDate(data['nextDelivery']);
 
     final bool isCancelled = status == 'Cancelled';
 
     return Container(
       margin: const EdgeInsets.only(bottom: 16),
+
       padding: const EdgeInsets.all(16),
+
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(18),
+
         boxShadow: [
           BoxShadow(
             color: Colors.black.withValues(alpha: 0.05),
@@ -329,22 +386,23 @@ class _MySubscriptionsPageState extends State<MySubscriptionsPage> {
           ),
         ],
       ),
+
       child: Column(
         children: [
-          // --------------------------------------------------
           // HEADER
-          // --------------------------------------------------
           Row(
             children: [
               Container(
                 height: 65,
                 width: 65,
+
                 decoration: BoxDecoration(
                   color: const Color(0xFFE8F1FB),
                   borderRadius: BorderRadius.circular(15),
                 ),
+
                 child: Icon(
-                  subscription['icon'] as IconData,
+                  getServiceIcon(category),
                   color: const Color(0xFF1565C0),
                   size: 32,
                 ),
@@ -355,9 +413,10 @@ class _MySubscriptionsPageState extends State<MySubscriptionsPage> {
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
+
                   children: [
                     Text(
-                      subscription['name'].toString(),
+                      name,
                       style: const TextStyle(
                         fontSize: 18,
                         fontWeight: FontWeight.bold,
@@ -368,7 +427,7 @@ class _MySubscriptionsPageState extends State<MySubscriptionsPage> {
                     const SizedBox(height: 5),
 
                     Text(
-                      subscription['category'].toString(),
+                      category,
                       style: const TextStyle(
                         fontSize: 13,
                         color: Color(0xFF6B778C),
@@ -378,7 +437,7 @@ class _MySubscriptionsPageState extends State<MySubscriptionsPage> {
                     const SizedBox(height: 6),
 
                     Text(
-                      '₹${subscription['price']} / ${subscription['unit']}',
+                      '₹$price / $unit',
                       style: const TextStyle(
                         fontSize: 14,
                         fontWeight: FontWeight.w600,
@@ -399,40 +458,32 @@ class _MySubscriptionsPageState extends State<MySubscriptionsPage> {
 
           const SizedBox(height: 15),
 
-          // --------------------------------------------------
           // QUANTITY + FREQUENCY
-          // --------------------------------------------------
           Row(
             children: [
               Expanded(
                 child: _infoItem(
                   Icons.shopping_basket_outlined,
                   'Quantity',
-                  '${subscription['quantity']} ${subscription['unit']}',
+                  '$quantity $unit',
                 ),
               ),
 
-              Expanded(
-                child: _infoItem(
-                  Icons.repeat,
-                  'Frequency',
-                  subscription['frequency'].toString(),
-                ),
-              ),
+              Expanded(child: _infoItem(Icons.repeat, 'Frequency', frequency)),
             ],
           ),
 
           const SizedBox(height: 15),
 
-          // --------------------------------------------------
           // NEXT DELIVERY
-          // --------------------------------------------------
           Container(
             padding: const EdgeInsets.all(12),
+
             decoration: BoxDecoration(
               color: const Color(0xFFF5F9FC),
               borderRadius: BorderRadius.circular(12),
             ),
+
             child: Row(
               children: [
                 const Icon(
@@ -450,15 +501,12 @@ class _MySubscriptionsPageState extends State<MySubscriptionsPage> {
 
                 const Spacer(),
 
-                Flexible(
-                  child: Text(
-                    subscription['nextDelivery'].toString(),
-                    textAlign: TextAlign.end,
-                    style: const TextStyle(
-                      fontSize: 13,
-                      fontWeight: FontWeight.w600,
-                      color: Color(0xFF172B4D),
-                    ),
+                Text(
+                  nextDelivery,
+                  style: const TextStyle(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w600,
+                    color: Color(0xFF172B4D),
                   ),
                 ),
               ],
@@ -467,17 +515,17 @@ class _MySubscriptionsPageState extends State<MySubscriptionsPage> {
 
           const SizedBox(height: 15),
 
-          // --------------------------------------------------
-          // MANAGE BUTTON
-          // --------------------------------------------------
+          // MANAGE
           if (!isCancelled)
             SizedBox(
               width: double.infinity,
               height: 45,
+
               child: OutlinedButton(
                 onPressed: () {
-                  _showManageBottomSheet(subscription);
+                  _showManageBottomSheet(documentId, status);
                 },
+
                 style: OutlinedButton.styleFrom(
                   foregroundColor: const Color(0xFF1565C0),
                   side: const BorderSide(color: Color(0xFF1565C0)),
@@ -485,6 +533,7 @@ class _MySubscriptionsPageState extends State<MySubscriptionsPage> {
                     borderRadius: BorderRadius.circular(12),
                   ),
                 ),
+
                 child: const Text('Manage Subscription'),
               ),
             ),
@@ -496,6 +545,7 @@ class _MySubscriptionsPageState extends State<MySubscriptionsPage> {
   // ----------------------------------------------------------
   // STATUS BADGE
   // ----------------------------------------------------------
+
   Widget _statusBadge(String status) {
     Color backgroundColor;
     Color textColor;
@@ -513,10 +563,12 @@ class _MySubscriptionsPageState extends State<MySubscriptionsPage> {
 
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 5),
+
       decoration: BoxDecoration(
         color: backgroundColor,
         borderRadius: BorderRadius.circular(8),
       ),
+
       child: Text(
         status,
         style: TextStyle(
@@ -531,6 +583,7 @@ class _MySubscriptionsPageState extends State<MySubscriptionsPage> {
   // ----------------------------------------------------------
   // INFO ITEM
   // ----------------------------------------------------------
+
   Widget _infoItem(IconData icon, String title, String value) {
     return Row(
       children: [
@@ -541,6 +594,7 @@ class _MySubscriptionsPageState extends State<MySubscriptionsPage> {
         Expanded(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
+
             children: [
               Text(
                 title,
@@ -567,24 +621,26 @@ class _MySubscriptionsPageState extends State<MySubscriptionsPage> {
   // ----------------------------------------------------------
   // MANAGE BOTTOM SHEET
   // ----------------------------------------------------------
-  void _showManageBottomSheet(Map<String, dynamic> subscription) {
-    final String documentId = subscription['id']?.toString() ?? '';
 
-    final String status = subscription['status']?.toString() ?? 'Active';
-
+  void _showManageBottomSheet(String documentId, String status) {
     showModalBottomSheet(
       context: context,
       backgroundColor: Colors.white,
+
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(25)),
       ),
+
       builder: (sheetContext) {
         return SafeArea(
           child: Padding(
             padding: const EdgeInsets.fromLTRB(20, 20, 20, 25),
+
             child: Column(
               mainAxisSize: MainAxisSize.min,
+
               crossAxisAlignment: CrossAxisAlignment.start,
+
               children: [
                 const Text(
                   'Manage Subscription',
@@ -601,13 +657,16 @@ class _MySubscriptionsPageState extends State<MySubscriptionsPage> {
                 ListTile(
                   leading: Icon(
                     status == 'Paused' ? Icons.play_arrow : Icons.pause,
+
                     color: const Color(0xFF1565C0),
                   ),
+
                   title: Text(
                     status == 'Paused'
                         ? 'Resume Subscription'
                         : 'Pause Subscription',
                   ),
+
                   onTap: () async {
                     Navigator.pop(sheetContext);
 
@@ -621,10 +680,12 @@ class _MySubscriptionsPageState extends State<MySubscriptionsPage> {
                 // CANCEL
                 ListTile(
                   leading: const Icon(Icons.cancel_outlined, color: Colors.red),
+
                   title: const Text(
                     'Cancel Subscription',
                     style: TextStyle(color: Colors.red),
                   ),
+
                   onTap: () {
                     Navigator.pop(sheetContext);
 

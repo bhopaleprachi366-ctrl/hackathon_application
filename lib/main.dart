@@ -1,14 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
-import 'package:hackathon_application/navigation/bottom_navigation.dart';
 
 import 'package:hackathon_application/screens/splash_page.dart';
 import 'firebase_options.dart';
-import 'package:firebase_core/firebase_core.dart';
-import 'package:flutter/material.dart';
-import 'firebase_options.dart';
-import 'screens/splash_page.dart';
-import 'theme/app_theme.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
