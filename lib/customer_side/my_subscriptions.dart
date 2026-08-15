@@ -1,18 +1,20 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 
-class MySubscriptionPage extends StatefulWidget {
-  const MySubscriptionPage({super.key});
+class MySubscriptionsPage extends StatefulWidget {
+  const MySubscriptionsPage({super.key});
 
   @override
-  State<MySubscriptionPage> createState() => _MySubscriptionPageState();
+  State<MySubscriptionsPage> createState() => _MySubscriptionsPageState();
 }
 
-class _MySubscriptionPageState extends State<MySubscriptionPage> {
+class _MySubscriptionsPageState extends State<MySubscriptionsPage> {
+  // ----------------------------------------------------------
+  // GET SUBSCRIPTIONS FROM FIRESTORE
+  // ----------------------------------------------------------
   Stream<List<Map<String, dynamic>>> getSubscriptions() {
     return FirebaseFirestore.instance
         .collection('subscriptions')
-        .orderBy('createdAt', descending: true)
         .snapshots()
         .map((snapshot) {
           return snapshot.docs.map((doc) {
@@ -38,9 +40,8 @@ class _MySubscriptionPageState extends State<MySubscriptionPage> {
   // ----------------------------------------------------------
   // SERVICE ICON
   // ----------------------------------------------------------
-
-  IconData _getServiceIcon(String? category) {
-    switch (category) {
+  IconData _getServiceIcon(dynamic category) {
+    switch (category?.toString()) {
       case 'Dairy':
         return Icons.local_drink_outlined;
 
@@ -64,7 +65,6 @@ class _MySubscriptionPageState extends State<MySubscriptionPage> {
   // ----------------------------------------------------------
   // UPDATE STATUS
   // ----------------------------------------------------------
-
   Future<void> updateSubscriptionStatus(
     String documentId,
     String newStatus,
@@ -101,7 +101,6 @@ class _MySubscriptionPageState extends State<MySubscriptionPage> {
   // ----------------------------------------------------------
   // CANCEL SUBSCRIPTION
   // ----------------------------------------------------------
-
   Future<void> cancelSubscription(String documentId) async {
     try {
       await FirebaseFirestore.instance
@@ -127,13 +126,12 @@ class _MySubscriptionPageState extends State<MySubscriptionPage> {
   }
 
   // ----------------------------------------------------------
-  // CONFIRM CANCEL DIALOG
+  // CANCEL CONFIRMATION
   // ----------------------------------------------------------
-
   void showCancelDialog(String documentId) {
     showDialog(
       context: context,
-      builder: (context) {
+      builder: (dialogContext) {
         return AlertDialog(
           title: const Text('Cancel Subscription'),
           content: const Text(
@@ -142,13 +140,14 @@ class _MySubscriptionPageState extends State<MySubscriptionPage> {
           actions: [
             TextButton(
               onPressed: () {
-                Navigator.pop(context);
+                Navigator.pop(dialogContext);
               },
               child: const Text('No'),
             ),
             ElevatedButton(
               onPressed: () async {
-                Navigator.pop(context);
+                Navigator.pop(dialogContext);
+
                 await cancelSubscription(documentId);
               },
               style: ElevatedButton.styleFrom(
@@ -166,7 +165,6 @@ class _MySubscriptionPageState extends State<MySubscriptionPage> {
   // ----------------------------------------------------------
   // BUILD
   // ----------------------------------------------------------
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -190,7 +188,7 @@ class _MySubscriptionPageState extends State<MySubscriptionPage> {
       ),
 
       // ------------------------------------------------------
-      // FIREBASE DATA
+      // FIRESTORE STREAM
       // ------------------------------------------------------
       body: StreamBuilder<List<Map<String, dynamic>>>(
         stream: getSubscriptions(),
@@ -207,13 +205,33 @@ class _MySubscriptionPageState extends State<MySubscriptionPage> {
             return Center(
               child: Padding(
                 padding: const EdgeInsets.all(20),
-                child: Text(
-                  'Something went wrong.\n\n${snapshot.error}',
-                  textAlign: TextAlign.center,
-                  style: const TextStyle(
-                    color: Color(0xFF6B778C),
-                    fontSize: 15,
-                  ),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    const Icon(
+                      Icons.error_outline,
+                      color: Colors.red,
+                      size: 55,
+                    ),
+                    const SizedBox(height: 15),
+                    const Text(
+                      'Something went wrong',
+                      style: TextStyle(
+                        fontSize: 19,
+                        fontWeight: FontWeight.bold,
+                        color: Color(0xFF172B4D),
+                      ),
+                    ),
+                    const SizedBox(height: 10),
+                    Text(
+                      '${snapshot.error}',
+                      textAlign: TextAlign.center,
+                      style: const TextStyle(
+                        color: Color(0xFF6B778C),
+                        fontSize: 14,
+                      ),
+                    ),
+                  ],
                 ),
               ),
             );
@@ -226,7 +244,7 @@ class _MySubscriptionPageState extends State<MySubscriptionPage> {
             return _emptyState();
           }
 
-          // Subscription List
+          // List
           return ListView.builder(
             padding: const EdgeInsets.fromLTRB(16, 18, 16, 25),
             itemCount: subscriptions.length,
@@ -242,7 +260,6 @@ class _MySubscriptionPageState extends State<MySubscriptionPage> {
   // ----------------------------------------------------------
   // EMPTY STATE
   // ----------------------------------------------------------
-
   Widget _emptyState() {
     return Center(
       child: Padding(
@@ -291,12 +308,11 @@ class _MySubscriptionPageState extends State<MySubscriptionPage> {
   // ----------------------------------------------------------
   // SUBSCRIPTION CARD
   // ----------------------------------------------------------
-
   Widget _subscriptionCard(Map<String, dynamic> subscription) {
-    final String documentId = subscription['id'];
-    final String status = subscription['status'];
+    final String documentId = subscription['id']?.toString() ?? '';
 
-    final bool isPaused = status == 'Paused';
+    final String status = subscription['status']?.toString() ?? 'Active';
+
     final bool isCancelled = status == 'Cancelled';
 
     return Container(
@@ -313,11 +329,10 @@ class _MySubscriptionPageState extends State<MySubscriptionPage> {
           ),
         ],
       ),
-
       child: Column(
         children: [
           // --------------------------------------------------
-          // SERVICE HEADER
+          // HEADER
           // --------------------------------------------------
           Row(
             children: [
@@ -329,7 +344,7 @@ class _MySubscriptionPageState extends State<MySubscriptionPage> {
                   borderRadius: BorderRadius.circular(15),
                 ),
                 child: Icon(
-                  subscription['icon'],
+                  subscription['icon'] as IconData,
                   color: const Color(0xFF1565C0),
                   size: 32,
                 ),
@@ -342,7 +357,7 @@ class _MySubscriptionPageState extends State<MySubscriptionPage> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      subscription['name'],
+                      subscription['name'].toString(),
                       style: const TextStyle(
                         fontSize: 18,
                         fontWeight: FontWeight.bold,
@@ -353,7 +368,7 @@ class _MySubscriptionPageState extends State<MySubscriptionPage> {
                     const SizedBox(height: 5),
 
                     Text(
-                      subscription['category'],
+                      subscription['category'].toString(),
                       style: const TextStyle(
                         fontSize: 13,
                         color: Color(0xFF6B778C),
@@ -374,7 +389,6 @@ class _MySubscriptionPageState extends State<MySubscriptionPage> {
                 ),
               ),
 
-              // STATUS
               _statusBadge(status),
             ],
           ),
@@ -402,7 +416,7 @@ class _MySubscriptionPageState extends State<MySubscriptionPage> {
                 child: _infoItem(
                   Icons.repeat,
                   'Frequency',
-                  subscription['frequency'],
+                  subscription['frequency'].toString(),
                 ),
               ),
             ],
@@ -436,12 +450,15 @@ class _MySubscriptionPageState extends State<MySubscriptionPage> {
 
                 const Spacer(),
 
-                Text(
-                  subscription['nextDelivery'],
-                  style: const TextStyle(
-                    fontSize: 13,
-                    fontWeight: FontWeight.w600,
-                    color: Color(0xFF172B4D),
+                Flexible(
+                  child: Text(
+                    subscription['nextDelivery'].toString(),
+                    textAlign: TextAlign.end,
+                    style: const TextStyle(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w600,
+                      color: Color(0xFF172B4D),
+                    ),
                   ),
                 ),
               ],
@@ -468,9 +485,7 @@ class _MySubscriptionPageState extends State<MySubscriptionPage> {
                     borderRadius: BorderRadius.circular(12),
                   ),
                 ),
-                child: Text(
-                  isPaused ? 'Manage Subscription' : 'Manage Subscription',
-                ),
+                child: const Text('Manage Subscription'),
               ),
             ),
         ],
@@ -481,7 +496,6 @@ class _MySubscriptionPageState extends State<MySubscriptionPage> {
   // ----------------------------------------------------------
   // STATUS BADGE
   // ----------------------------------------------------------
-
   Widget _statusBadge(String status) {
     Color backgroundColor;
     Color textColor;
@@ -517,7 +531,6 @@ class _MySubscriptionPageState extends State<MySubscriptionPage> {
   // ----------------------------------------------------------
   // INFO ITEM
   // ----------------------------------------------------------
-
   Widget _infoItem(IconData icon, String title, String value) {
     return Row(
       children: [
@@ -554,10 +567,10 @@ class _MySubscriptionPageState extends State<MySubscriptionPage> {
   // ----------------------------------------------------------
   // MANAGE BOTTOM SHEET
   // ----------------------------------------------------------
-
   void _showManageBottomSheet(Map<String, dynamic> subscription) {
-    final String documentId = subscription['id'];
-    final String status = subscription['status'];
+    final String documentId = subscription['id']?.toString() ?? '';
+
+    final String status = subscription['status']?.toString() ?? 'Active';
 
     showModalBottomSheet(
       context: context,
@@ -565,7 +578,7 @@ class _MySubscriptionPageState extends State<MySubscriptionPage> {
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(25)),
       ),
-      builder: (context) {
+      builder: (sheetContext) {
         return SafeArea(
           child: Padding(
             padding: const EdgeInsets.fromLTRB(20, 20, 20, 25),
@@ -596,7 +609,7 @@ class _MySubscriptionPageState extends State<MySubscriptionPage> {
                         : 'Pause Subscription',
                   ),
                   onTap: () async {
-                    Navigator.pop(context);
+                    Navigator.pop(sheetContext);
 
                     await updateSubscriptionStatus(
                       documentId,
@@ -613,7 +626,7 @@ class _MySubscriptionPageState extends State<MySubscriptionPage> {
                     style: TextStyle(color: Colors.red),
                   ),
                   onTap: () {
-                    Navigator.pop(context);
+                    Navigator.pop(sheetContext);
 
                     showCancelDialog(documentId);
                   },

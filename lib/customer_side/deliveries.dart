@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 
 class DeliveriesPage extends StatefulWidget {
   const DeliveriesPage({super.key});
@@ -10,47 +11,124 @@ class DeliveriesPage extends StatefulWidget {
 class _DeliveriesPageState extends State<DeliveriesPage> {
   String selectedFilter = 'All';
 
-  final List<Map<String, dynamic>> deliveries = [
-    {
-      'service': 'Fresh Milk',
-      'category': 'Dairy',
-      'date': '16 Aug 2026',
-      'time': '7:00 AM - 9:00 AM',
-      'quantity': '1 litre',
-      'status': 'Upcoming',
-      'icon': Icons.local_drink_outlined,
-    },
-    {
-      'service': 'Drinking Water',
-      'category': 'Water',
-      'date': '20 Aug 2026',
-      'time': '10:00 AM - 12:00 PM',
-      'quantity': '2 cans',
-      'status': 'Upcoming',
-      'icon': Icons.water_drop_outlined,
-    },
-    {
-      'service': 'Daily Tiffin',
-      'category': 'Food',
-      'date': '15 Aug 2026',
-      'time': '12:00 PM - 2:00 PM',
-      'quantity': '1 meal',
-      'status': 'Delivered',
-      'icon': Icons.restaurant_outlined,
-    },
-  ];
+  final List<String> filters = ['All', 'Upcoming', 'Delivered'];
+
+  // ----------------------------------------------------------
+  // FIREBASE - GET DELIVERIES
+  // ----------------------------------------------------------
+
+  Stream<List<Map<String, dynamic>>> getDeliveries() {
+    return FirebaseFirestore.instance
+        .collection('deliveries')
+        .orderBy('deliveryDate')
+        .snapshots()
+        .map((snapshot) {
+          return snapshot.docs.map((doc) {
+            final data = doc.data();
+
+            return {
+              'id': doc.id,
+              'createdAt': data['createdAt'],
+              'deliveryDate': data['deliveryDate'],
+              'quantity': data['quantity'] ?? 1,
+              'serviceId': data['serviceId'] ?? '',
+              'status': data['status'] ?? 'scheduled',
+              'subscriptionId': data['subscriptionId'] ?? '',
+              'userId': data['userId'] ?? '',
+              'vendorId': data['vendorId'] ?? '',
+            };
+          }).toList();
+        });
+  }
+
+  // ----------------------------------------------------------
+  // CONVERT FIREBASE TIMESTAMP
+  // ----------------------------------------------------------
+
+  DateTime? _getDeliveryDate(dynamic value) {
+    if (value is Timestamp) {
+      return value.toDate();
+    }
+
+    if (value is DateTime) {
+      return value;
+    }
+
+    return null;
+  }
+
+  // ----------------------------------------------------------
+  // FORMAT DATE
+  // ----------------------------------------------------------
+
+  String _formatDate(dynamic value) {
+    final date = _getDeliveryDate(value);
+
+    if (date == null) {
+      return 'Not scheduled';
+    }
+
+    return '${date.day.toString().padLeft(2, '0')}/'
+        '${date.month.toString().padLeft(2, '0')}/'
+        '${date.year}';
+  }
+
+  // ----------------------------------------------------------
+  // FORMAT TIME
+  // ----------------------------------------------------------
+
+  String _formatTime(dynamic value) {
+    final date = _getDeliveryDate(value);
+
+    if (date == null) {
+      return 'Not available';
+    }
+
+    final hour = date.hour;
+    final minute = date.minute.toString().padLeft(2, '0');
+
+    final period = hour >= 12 ? 'PM' : 'AM';
+
+    final displayHour = hour % 12 == 0 ? 12 : hour % 12;
+
+    return '$displayHour:$minute $period';
+  }
+
+  // ----------------------------------------------------------
+  // STATUS
+  // ----------------------------------------------------------
+
+  String _displayStatus(String status) {
+    switch (status.toLowerCase()) {
+      case 'scheduled':
+        return 'Upcoming';
+
+      case 'delivered':
+        return 'Delivered';
+
+      case 'cancelled':
+        return 'Cancelled';
+
+      case 'pending':
+        return 'Pending';
+
+      default:
+        return status;
+    }
+  }
+
+  // ----------------------------------------------------------
+  // BUILD
+  // ----------------------------------------------------------
 
   @override
   Widget build(BuildContext context) {
-    final filteredDeliveries = selectedFilter == 'All'
-        ? deliveries
-        : deliveries
-              .where((delivery) => delivery['status'] == selectedFilter)
-              .toList();
-
     return Scaffold(
       backgroundColor: const Color(0xFFF5F9FC),
 
+      // ------------------------------------------------------
+      // APP BAR
+      // ------------------------------------------------------
       appBar: AppBar(
         backgroundColor: const Color(0xFF1565C0),
         elevation: 0,
@@ -59,131 +137,256 @@ class _DeliveriesPageState extends State<DeliveriesPage> {
           'Deliveries',
           style: TextStyle(
             color: Colors.white,
-            fontSize: 21,
+            fontSize: 22,
             fontWeight: FontWeight.bold,
           ),
         ),
       ),
 
-      body: Column(
-        children: [
-          // Filter Buttons
-          Padding(
-            padding: const EdgeInsets.fromLTRB(16, 18, 16, 10),
-            child: Row(
-              children: [
-                _filterButton('All'),
-                const SizedBox(width: 10),
-                _filterButton('Upcoming'),
-                const SizedBox(width: 10),
-                _filterButton('Delivered'),
-              ],
-            ),
-          ),
+      // ------------------------------------------------------
+      // FIREBASE STREAM
+      // ------------------------------------------------------
+      body: StreamBuilder<List<Map<String, dynamic>>>(
+        stream: getDeliveries(),
+        builder: (context, snapshot) {
+          // Loading
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            return const Center(
+              child: CircularProgressIndicator(color: Color(0xFF1565C0)),
+            );
+          }
 
-          // Delivery Count
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-            child: Row(
-              children: [
-                Text(
-                  '${filteredDeliveries.length} Deliveries',
+          // Error
+          if (snapshot.hasError) {
+            return Center(
+              child: Padding(
+                padding: const EdgeInsets.all(20),
+                child: Text(
+                  'Something went wrong.\n\n${snapshot.error}',
+                  textAlign: TextAlign.center,
                   style: const TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
-                    color: Color(0xFF172B4D),
+                    color: Color(0xFF6B778C),
+                    fontSize: 15,
                   ),
                 ),
-              ],
-            ),
-          ),
+              ),
+            );
+          }
 
-          // Delivery List
-          Expanded(
-            child: filteredDeliveries.isEmpty
-                ? _emptyState()
-                : ListView.builder(
-                    padding: const EdgeInsets.fromLTRB(16, 5, 16, 20),
-                    itemCount: filteredDeliveries.length,
-                    itemBuilder: (context, index) {
-                      return _deliveryCard(filteredDeliveries[index]);
-                    },
+          final deliveries = snapshot.data ?? [];
+
+          // --------------------------------------------------
+          // FILTER DELIVERIES
+          // --------------------------------------------------
+
+          final filteredDeliveries = deliveries.where((delivery) {
+            final status = _displayStatus(delivery['status'].toString());
+
+            if (selectedFilter == 'All') {
+              return true;
+            }
+
+            return status == selectedFilter;
+          }).toList();
+
+          return Column(
+            children: [
+              // ------------------------------------------------
+              // FILTER BUTTONS
+              // ------------------------------------------------
+              SizedBox(
+                height: 65,
+                child: ListView.builder(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 10,
                   ),
-          ),
-        ],
+                  scrollDirection: Axis.horizontal,
+                  itemCount: filters.length,
+                  itemBuilder: (context, index) {
+                    final filter = filters[index];
+                    final isSelected = selectedFilter == filter;
+
+                    return GestureDetector(
+                      onTap: () {
+                        setState(() {
+                          selectedFilter = filter;
+                        });
+                      },
+                      child: Container(
+                        margin: const EdgeInsets.only(right: 10),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 20,
+                          vertical: 10,
+                        ),
+                        decoration: BoxDecoration(
+                          color: isSelected
+                              ? const Color(0xFF1565C0)
+                              : Colors.white,
+                          borderRadius: BorderRadius.circular(25),
+                          border: Border.all(
+                            color: isSelected
+                                ? const Color(0xFF1565C0)
+                                : const Color(0xFFE0E6ED),
+                          ),
+                        ),
+                        child: Center(
+                          child: Text(
+                            filter,
+                            style: TextStyle(
+                              color: isSelected
+                                  ? Colors.white
+                                  : const Color(0xFF172B4D),
+                              fontSize: 13,
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ),
+                      ),
+                    );
+                  },
+                ),
+              ),
+
+              // ------------------------------------------------
+              // DELIVERY COUNT
+              // ------------------------------------------------
+              Padding(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 16,
+                  vertical: 8,
+                ),
+                child: Row(
+                  children: [
+                    Text(
+                      '${filteredDeliveries.length} Deliveries',
+                      style: const TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                        color: Color(0xFF172B4D),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+
+              // ------------------------------------------------
+              // DELIVERY LIST
+              // ------------------------------------------------
+              Expanded(
+                child: filteredDeliveries.isEmpty
+                    ? _emptyState()
+                    : ListView.builder(
+                        padding: const EdgeInsets.fromLTRB(16, 5, 16, 20),
+                        itemCount: filteredDeliveries.length,
+                        itemBuilder: (context, index) {
+                          final delivery = filteredDeliveries[index];
+
+                          return _deliveryCard(delivery: delivery);
+                        },
+                      ),
+              ),
+            ],
+          );
+        },
       ),
     );
   }
 
-  Widget _filterButton(String filter) {
-    final bool isSelected = selectedFilter == filter;
+  // ----------------------------------------------------------
+  // EMPTY STATE
+  // ----------------------------------------------------------
 
-    return Expanded(
-      child: GestureDetector(
-        onTap: () {
-          setState(() {
-            selectedFilter = filter;
-          });
-        },
-        child: Container(
-          padding: const EdgeInsets.symmetric(vertical: 11),
-          decoration: BoxDecoration(
-            color: isSelected ? const Color(0xFF1565C0) : Colors.white,
-            borderRadius: BorderRadius.circular(12),
-            border: Border.all(
-              color: isSelected
-                  ? const Color(0xFF1565C0)
-                  : const Color(0xFFE0E6ED),
-            ),
-          ),
-          child: Center(
-            child: Text(
-              filter,
-              style: TextStyle(
-                color: isSelected ? Colors.white : const Color(0xFF172B4D),
-                fontSize: 13,
-                fontWeight: FontWeight.w600,
+  Widget _emptyState() {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(30),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Container(
+              height: 90,
+              width: 90,
+              decoration: BoxDecoration(
+                color: const Color(0xFFE8F1FB),
+                borderRadius: BorderRadius.circular(25),
+              ),
+              child: const Icon(
+                Icons.local_shipping_outlined,
+                size: 45,
+                color: Color(0xFF1565C0),
               ),
             ),
-          ),
+
+            const SizedBox(height: 20),
+
+            const Text(
+              'No deliveries found',
+              style: TextStyle(
+                fontSize: 20,
+                fontWeight: FontWeight.bold,
+                color: Color(0xFF172B4D),
+              ),
+            ),
+
+            const SizedBox(height: 8),
+
+            const Text(
+              'Your upcoming deliveries will appear here.',
+              textAlign: TextAlign.center,
+              style: TextStyle(fontSize: 14, color: Color(0xFF6B778C)),
+            ),
+          ],
         ),
       ),
     );
   }
 
-  Widget _deliveryCard(Map<String, dynamic> delivery) {
-    final bool isDelivered = delivery['status'] == 'Delivered';
+  // ----------------------------------------------------------
+  // DELIVERY CARD
+  // ----------------------------------------------------------
+
+  Widget _deliveryCard({required Map<String, dynamic> delivery}) {
+    final String rawStatus = delivery['status'].toString();
+
+    final String status = _displayStatus(rawStatus);
+
+    final bool isDelivered = status == 'Delivered';
+    final bool isCancelled = status == 'Cancelled';
 
     return Container(
       margin: const EdgeInsets.only(bottom: 15),
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(15),
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(18),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
+            color: Colors.black.withValues(alpha: 0.05),
             blurRadius: 8,
             offset: const Offset(0, 3),
           ),
         ],
       ),
+
       child: Column(
         children: [
-          // Top Section
+          // ----------------------------------------------------
+          // HEADER
+          // ----------------------------------------------------
           Row(
             children: [
               Container(
-                height: 62,
-                width: 62,
+                height: 65,
+                width: 65,
                 decoration: BoxDecoration(
                   color: const Color(0xFFE8F1FB),
                   borderRadius: BorderRadius.circular(15),
                 ),
-                child: Icon(
-                  delivery['icon'],
-                  color: const Color(0xFF1565C0),
-                  size: 31,
+                child: const Icon(
+                  Icons.local_shipping_outlined,
+                  color: Color(0xFF1565C0),
+                  size: 32,
                 ),
               ),
 
@@ -193,10 +396,10 @@ class _DeliveriesPageState extends State<DeliveriesPage> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(
-                      delivery['service'],
-                      style: const TextStyle(
-                        fontSize: 17,
+                    const Text(
+                      'Delivery',
+                      style: TextStyle(
+                        fontSize: 18,
                         fontWeight: FontWeight.bold,
                         color: Color(0xFF172B4D),
                       ),
@@ -205,47 +408,30 @@ class _DeliveriesPageState extends State<DeliveriesPage> {
                     const SizedBox(height: 5),
 
                     Text(
-                      delivery['category'],
+                      'Service ID: ${delivery['serviceId'].toString().isEmpty ? 'Not assigned' : delivery['serviceId']}',
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
                       style: const TextStyle(
-                        fontSize: 13,
+                        fontSize: 12,
                         color: Color(0xFF6B778C),
                       ),
                     ),
 
-                    const SizedBox(height: 5),
+                    const SizedBox(height: 6),
 
                     Text(
-                      delivery['quantity'],
+                      'Quantity: ${delivery['quantity']}',
                       style: const TextStyle(
                         fontSize: 13,
-                        fontWeight: FontWeight.w600,
-                        color: Color(0xFF1565C0),
+                        color: Color(0xFF172B4D),
+                        fontWeight: FontWeight.w500,
                       ),
                     ),
                   ],
                 ),
               ),
 
-              // Status
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 6),
-                decoration: BoxDecoration(
-                  color: isDelivered
-                      ? const Color(0xFFE8F6F3)
-                      : const Color(0xFFFFF4E5),
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: Text(
-                  delivery['status'],
-                  style: TextStyle(
-                    color: isDelivered
-                        ? const Color(0xFF008F7A)
-                        : const Color(0xFFE67E22),
-                    fontSize: 11,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-              ),
+              _statusBadge(status),
             ],
           ),
 
@@ -255,61 +441,24 @@ class _DeliveriesPageState extends State<DeliveriesPage> {
 
           const SizedBox(height: 15),
 
-          // Date
+          // ----------------------------------------------------
+          // DATE + TIME
+          // ----------------------------------------------------
           Row(
             children: [
-              const Icon(
-                Icons.calendar_month_outlined,
-                size: 21,
-                color: Color(0xFF1565C0),
-              ),
-
-              const SizedBox(width: 10),
-
-              const Text(
-                'Delivery Date',
-                style: TextStyle(fontSize: 13, color: Color(0xFF6B778C)),
-              ),
-
-              const Spacer(),
-
-              Text(
-                delivery['date'],
-                style: const TextStyle(
-                  fontSize: 13,
-                  fontWeight: FontWeight.bold,
-                  color: Color(0xFF172B4D),
+              Expanded(
+                child: _infoItem(
+                  Icons.calendar_today_outlined,
+                  'Delivery Date',
+                  _formatDate(delivery['deliveryDate']),
                 ),
               ),
-            ],
-          ),
 
-          const SizedBox(height: 12),
-
-          // Time
-          Row(
-            children: [
-              const Icon(
-                Icons.access_time_outlined,
-                size: 21,
-                color: Color(0xFF1565C0),
-              ),
-
-              const SizedBox(width: 10),
-
-              const Text(
-                'Delivery Time',
-                style: TextStyle(fontSize: 13, color: Color(0xFF6B778C)),
-              ),
-
-              const Spacer(),
-
-              Text(
-                delivery['time'],
-                style: const TextStyle(
-                  fontSize: 13,
-                  fontWeight: FontWeight.bold,
-                  color: Color(0xFF172B4D),
+              Expanded(
+                child: _infoItem(
+                  Icons.access_time_outlined,
+                  'Delivery Time',
+                  _formatTime(delivery['deliveryDate']),
                 ),
               ),
             ],
@@ -317,17 +466,69 @@ class _DeliveriesPageState extends State<DeliveriesPage> {
 
           const SizedBox(height: 15),
 
-          // Track Button
-          if (!isDelivered)
+          // ----------------------------------------------------
+          // SUBSCRIPTION ID
+          // ----------------------------------------------------
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: const Color(0xFFF5F9FC),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Row(
+              children: [
+                const Icon(
+                  Icons.subscriptions_outlined,
+                  color: Color(0xFF1565C0),
+                  size: 20,
+                ),
+
+                const SizedBox(width: 10),
+
+                const Text(
+                  'Subscription',
+                  style: TextStyle(fontSize: 12, color: Color(0xFF6B778C)),
+                ),
+
+                const Spacer(),
+
+                Flexible(
+                  child: Text(
+                    delivery['subscriptionId'].toString().isEmpty
+                        ? 'Not assigned'
+                        : delivery['subscriptionId'],
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w600,
+                      color: Color(0xFF172B4D),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+
+          const SizedBox(height: 15),
+
+          // ----------------------------------------------------
+          // ACTION
+          // ----------------------------------------------------
+          if (!isDelivered && !isCancelled)
             SizedBox(
               width: double.infinity,
-              height: 43,
+              height: 45,
               child: ElevatedButton.icon(
                 onPressed: () {
-                  _showTrackingDialog(delivery);
+                  _showDeliveryDetails(delivery);
                 },
-                icon: const Icon(Icons.location_on_outlined, size: 19),
-                label: const Text('Track Delivery'),
+                icon: const Icon(Icons.location_on_outlined, size: 20),
+                label: const Text(
+                  'View Delivery',
+                  style: TextStyle(fontWeight: FontWeight.w600),
+                ),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: const Color(0xFF1565C0),
                   foregroundColor: Colors.white,
@@ -338,17 +539,17 @@ class _DeliveriesPageState extends State<DeliveriesPage> {
                 ),
               ),
             )
-          else
+          else if (isDelivered)
             Container(
               width: double.infinity,
-              height: 43,
+              height: 45,
               decoration: BoxDecoration(
                 color: const Color(0xFFE8F6F3),
                 borderRadius: BorderRadius.circular(12),
               ),
               child: const Center(
                 child: Text(
-                  '✓ Delivery Completed',
+                  'Delivery Completed',
                   style: TextStyle(
                     color: Color(0xFF008F7A),
                     fontWeight: FontWeight.w600,
@@ -361,75 +562,139 @@ class _DeliveriesPageState extends State<DeliveriesPage> {
     );
   }
 
-  Widget _emptyState() {
-    return Center(
-      child: Padding(
-        padding: const EdgeInsets.all(30),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            const Icon(
-              Icons.local_shipping_outlined,
-              size: 80,
-              color: Color(0xFFB0BEC5),
-            ),
+  // ----------------------------------------------------------
+  // STATUS BADGE
+  // ----------------------------------------------------------
 
-            const SizedBox(height: 20),
+  Widget _statusBadge(String status) {
+    Color backgroundColor;
+    Color textColor;
 
-            const Text(
-              'No Deliveries Found',
-              style: TextStyle(
-                fontSize: 21,
-                fontWeight: FontWeight.bold,
-                color: Color(0xFF172B4D),
-              ),
-            ),
+    switch (status) {
+      case 'Delivered':
+        backgroundColor = const Color(0xFFE8F6F3);
+        textColor = const Color(0xFF008F7A);
+        break;
 
-            const SizedBox(height: 8),
+      case 'Cancelled':
+        backgroundColor = const Color(0xFFFFEBEE);
+        textColor = Colors.red;
+        break;
 
-            const Text(
-              'Your delivery information will appear here.',
-              textAlign: TextAlign.center,
-              style: TextStyle(fontSize: 14, color: Color(0xFF6B778C)),
-            ),
-          ],
+      case 'Pending':
+        backgroundColor = const Color(0xFFFFF4E5);
+        textColor = const Color(0xFFE08A00);
+        break;
+
+      default:
+        backgroundColor = const Color(0xFFE8F1FB);
+        textColor = const Color(0xFF1565C0);
+    }
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 5),
+      decoration: BoxDecoration(
+        color: backgroundColor,
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: Text(
+        status,
+        style: TextStyle(
+          color: textColor,
+          fontSize: 11,
+          fontWeight: FontWeight.bold,
         ),
       ),
     );
   }
 
-  void _showTrackingDialog(Map<String, dynamic> delivery) {
+  // ----------------------------------------------------------
+  // INFO ITEM
+  // ----------------------------------------------------------
+
+  Widget _infoItem(IconData icon, String title, String value) {
+    return Row(
+      children: [
+        Icon(icon, color: const Color(0xFF1565C0), size: 20),
+
+        const SizedBox(width: 8),
+
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                title,
+                style: const TextStyle(fontSize: 11, color: Color(0xFF6B778C)),
+              ),
+
+              const SizedBox(height: 3),
+
+              Text(
+                value,
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+                style: const TextStyle(
+                  fontSize: 13,
+                  fontWeight: FontWeight.w600,
+                  color: Color(0xFF172B4D),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
+  // ----------------------------------------------------------
+  // DELIVERY DETAILS DIALOG
+  // ----------------------------------------------------------
+
+  void _showDeliveryDetails(Map<String, dynamic> delivery) {
+    final status = _displayStatus(delivery['status'].toString());
+
     showDialog(
       context: context,
       builder: (context) {
         return AlertDialog(
-          title: const Text('Track Delivery'),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(18),
+          ),
+
+          title: const Text(
+            'Delivery Details',
+            style: TextStyle(
+              fontWeight: FontWeight.bold,
+              color: Color(0xFF172B4D),
+            ),
+          ),
 
           content: Column(
             mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Icon(
-                Icons.local_shipping_outlined,
-                size: 55,
-                color: Color(0xFF1565C0),
-              ),
+              _dialogRow('Status', status),
 
-              const SizedBox(height: 15),
+              const SizedBox(height: 12),
 
-              Text(
-                delivery['service'],
-                style: const TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
+              _dialogRow('Date', _formatDate(delivery['deliveryDate'])),
 
-              const SizedBox(height: 8),
+              const SizedBox(height: 12),
 
-              const Text(
-                'Your delivery is scheduled and will be delivered soon.',
-                textAlign: TextAlign.center,
-                style: TextStyle(color: Color(0xFF6B778C)),
+              _dialogRow('Time', _formatTime(delivery['deliveryDate'])),
+
+              const SizedBox(height: 12),
+
+              _dialogRow('Quantity', '${delivery['quantity']}'),
+
+              const SizedBox(height: 12),
+
+              _dialogRow(
+                'Service ID',
+                delivery['serviceId'].toString().isEmpty
+                    ? 'Not assigned'
+                    : delivery['serviceId'],
               ),
             ],
           ),
@@ -439,11 +704,44 @@ class _DeliveriesPageState extends State<DeliveriesPage> {
               onPressed: () {
                 Navigator.pop(context);
               },
-              child: const Text('Close'),
+              child: const Text(
+                'Close',
+                style: TextStyle(color: Color(0xFF1565C0)),
+              ),
             ),
           ],
         );
       },
+    );
+  }
+
+  // ----------------------------------------------------------
+  // DIALOG ROW
+  // ----------------------------------------------------------
+
+  Widget _dialogRow(String title, String value) {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        SizedBox(
+          width: 90,
+          child: Text(
+            title,
+            style: const TextStyle(fontSize: 13, color: Color(0xFF6B778C)),
+          ),
+        ),
+
+        Expanded(
+          child: Text(
+            value,
+            style: const TextStyle(
+              fontSize: 13,
+              fontWeight: FontWeight.w600,
+              color: Color(0xFF172B4D),
+            ),
+          ),
+        ),
+      ],
     );
   }
 }

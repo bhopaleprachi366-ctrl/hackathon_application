@@ -133,7 +133,7 @@ class _HomePageState extends State<HomePage> {
   void openSubscriptionsPage() {
     Navigator.push(
       context,
-      MaterialPageRoute(builder: (context) => MySubscriptionPage()),
+      MaterialPageRoute(builder: (context) => MySubscriptionsPage()),
     );
   }
 
