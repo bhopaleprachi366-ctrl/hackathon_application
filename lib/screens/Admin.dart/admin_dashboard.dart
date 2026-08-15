@@ -1,21 +1,23 @@
 import 'package:flutter/material.dart';
-import 'package:hackathon_application/screens/vendor/Deliveries.dart';
-import 'subscribers.dart';
-import 'my_service.dart';
+import 'package:hackathon_application/screens/Admin.dart/services.dart';
+import 'package:hackathon_application/screens/Admin.dart/users.dart';
+import 'subscription2.dart';
+import 'vendors.dart';
 
-class VendorDashboard extends StatelessWidget {
-  const VendorDashboard({super.key});
+class AdminDashboard extends StatelessWidget {
+  const AdminDashboard({super.key});
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: const Color(0xFFF7F8FA),
+
       appBar: AppBar(
         elevation: 0,
         backgroundColor: Colors.white,
         foregroundColor: Colors.black87,
         title: const Text(
-          'Vendor Dashboard',
+          'Admin Dashboard',
           style: TextStyle(fontWeight: FontWeight.bold),
         ),
         actions: [
@@ -32,16 +34,15 @@ class VendorDashboard extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Welcome Section
             const Text(
-              'Welcome, Vendor 👋',
+              'Welcome, Admin 👋',
               style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
             ),
 
             const SizedBox(height: 6),
 
             const Text(
-              'Manage your services and deliveries easily.',
+              'Manage your application from here.',
               style: TextStyle(fontSize: 14, color: Colors.grey),
             ),
 
@@ -52,17 +53,17 @@ class VendorDashboard extends StatelessWidget {
               children: [
                 Expanded(
                   child: _buildStatCard(
-                    icon: Icons.miscellaneous_services_outlined,
-                    title: 'Services',
-                    value: '12',
+                    icon: Icons.people_outline,
+                    title: 'Users',
+                    value: '120',
                   ),
                 ),
                 const SizedBox(width: 12),
                 Expanded(
                   child: _buildStatCard(
-                    icon: Icons.people_outline,
-                    title: 'Subscribers',
-                    value: '48',
+                    icon: Icons.store_outlined,
+                    title: 'Vendors',
+                    value: '24',
                   ),
                 ),
               ],
@@ -74,17 +75,17 @@ class VendorDashboard extends StatelessWidget {
               children: [
                 Expanded(
                   child: _buildStatCard(
-                    icon: Icons.local_shipping_outlined,
-                    title: 'Deliveries',
-                    value: '24',
+                    icon: Icons.miscellaneous_services_outlined,
+                    title: 'Services',
+                    value: '56',
                   ),
                 ),
                 const SizedBox(width: 12),
                 Expanded(
                   child: _buildStatCard(
-                    icon: Icons.pending_actions_outlined,
-                    title: 'Pending',
-                    value: '06',
+                    icon: Icons.subscriptions_outlined,
+                    title: 'Subscriptions',
+                    value: '89',
                   ),
                 ),
               ],
@@ -93,84 +94,79 @@ class VendorDashboard extends StatelessWidget {
             const SizedBox(height: 30),
 
             const Text(
-              'Quick Actions',
+              'Management',
               style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
             ),
 
             const SizedBox(height: 15),
 
-            // My Services
-            _buildActionCard(
-              context,
-              icon: Icons.miscellaneous_services_outlined,
-              title: 'My Services',
-              subtitle: 'View and manage your services',
-              onTap: () {
-              Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => const MyServicesPage(),
-                  ),
-                );
-                // Navigate to My Services
-              },
-            ),
-
-            const SizedBox(height: 12),
-
-            // Add Service
-            _buildActionCard(
-              context,
-              icon: Icons.add_circle_outline,
-              title: 'Add Service',
-              subtitle: 'Create a new service',
-              onTap: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => const MyServicesPage(),
-                  ),
-                );
-                // Navigate to Add Service
-              },
-            ),
-
-            const SizedBox(height: 12),
-
-            // Subscribers
             _buildActionCard(
               context,
               icon: Icons.people_outline,
-              title: 'Subscribers',
-              subtitle: 'View your active subscribers',
+              title: 'Users',
+              subtitle: 'View and manage users',
               onTap: () {
-                 Navigator.push(
+                Navigator.push(
                   context,
                   MaterialPageRoute(
-                    builder: (context) => const SubscribersPage(),
+                    builder: (context) => const UsersPage(),
                   ),
                 );
-                
-                // Navigate to Subscribers
+                // Navigate to Users
               },
             ),
 
             const SizedBox(height: 12),
 
-            // Deliveries
             _buildActionCard(
               context,
-              icon: Icons.local_shipping_outlined,
-              title: 'Deliveries',
-              subtitle: 'Manage upcoming deliveries',
+              icon: Icons.store_outlined,
+              title: 'Vendors',
+              subtitle: 'View and manage vendors',
               onTap: () {
                 Navigator.push(
                   context,
                   MaterialPageRoute(
-                    builder: (context) => const DeliveriesPage(),
+                    builder: (context) => const VendorsPage(),
                   ),
                 );
-                // Navigate to Deliveries
+                // Navigate to Vendors
+              },
+            ),
+
+            const SizedBox(height: 12),
+
+            _buildActionCard(
+              context,
+              icon: Icons.miscellaneous_services_outlined,
+              title: 'Services',
+              subtitle: 'Manage all available services',
+              onTap: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => const ServicesPage(),
+                  ),
+                );
+                // Navigate to Services
+              },
+            ),
+
+            const SizedBox(height: 12),
+
+            _buildActionCard(
+              context,
+              icon: Icons.subscriptions_outlined,
+              title: 'Subscriptions',
+              subtitle: 'View and manage subscriptions',
+              onTap: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => const SubscriptionsPage(),
+                  ),
+                );
+                // Navigate to Subscriptions
               },
             ),
           ],
@@ -201,12 +197,16 @@ class VendorDashboard extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Icon(icon, size: 28, color: const Color(0xFF2563EB)),
+
           const SizedBox(height: 12),
+
           Text(
             value,
             style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
           ),
+
           const SizedBox(height: 4),
+
           Text(title, style: const TextStyle(color: Colors.grey, fontSize: 13)),
         ],
       ),
@@ -225,6 +225,7 @@ class VendorDashboard extends StatelessWidget {
       borderRadius: BorderRadius.circular(16),
       child: Container(
         padding: const EdgeInsets.all(16),
+
         decoration: BoxDecoration(
           color: Colors.white,
           borderRadius: BorderRadius.circular(16),
@@ -236,15 +237,18 @@ class VendorDashboard extends StatelessWidget {
             ),
           ],
         ),
+
         child: Row(
           children: [
             Container(
               padding: const EdgeInsets.all(12),
+
               decoration: BoxDecoration(
-                color: const Color(0xFFEEF2FF),
+                color: const Color(0xFFEFF6FF),
                 borderRadius: BorderRadius.circular(12),
               ),
-              child: Icon(icon, color: const Color(0xFFEFF6FF), size: 26),
+
+              child: Icon(icon, color: const Color(0xFF2563EB), size: 26),
             ),
 
             const SizedBox(width: 15),
@@ -260,7 +264,9 @@ class VendorDashboard extends StatelessWidget {
                       fontWeight: FontWeight.bold,
                     ),
                   ),
+
                   const SizedBox(height: 4),
+
                   Text(
                     subtitle,
                     style: const TextStyle(fontSize: 13, color: Colors.grey),

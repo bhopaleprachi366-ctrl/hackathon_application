@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 
 class AddServicePage extends StatefulWidget {
   const AddServicePage({super.key});
@@ -10,14 +12,11 @@ class AddServicePage extends StatefulWidget {
 class _AddServicePageState extends State<AddServicePage> {
   final _formKey = GlobalKey<FormState>();
 
-  final TextEditingController _serviceNameController =
-      TextEditingController();
+  final TextEditingController _serviceNameController = TextEditingController();
 
-  final TextEditingController _descriptionController =
-      TextEditingController();
+  final TextEditingController _descriptionController = TextEditingController();
 
-  final TextEditingController _priceController =
-      TextEditingController();
+  final TextEditingController _priceController = TextEditingController();
 
   String? selectedCategory;
 
@@ -37,8 +36,23 @@ class _AddServicePageState extends State<AddServicePage> {
     super.dispose();
   }
 
-  void _addService() {
-    if (_formKey.currentState!.validate()) {
+  Future<void> _addService() async {
+    if (!_formKey.currentState!.validate()) {
+      return;
+    }
+
+    try {
+      await FirebaseFirestore.instance.collection('services').add({
+        'name': _serviceNameController.text.trim(),
+        'category': selectedCategory,
+        'description': _descriptionController.text.trim(),
+        'price': double.parse(_priceController.text.trim()),
+        'vendorId': FirebaseAuth.instance.currentUser!.uid,
+        'createdAt': FieldValue.serverTimestamp(),
+      });
+
+      if (!mounted) return;
+
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('Service added successfully!'),
@@ -47,6 +61,12 @@ class _AddServicePageState extends State<AddServicePage> {
       );
 
       Navigator.pop(context);
+    } catch (e) {
+      if (!mounted) return;
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Error: $e'), backgroundColor: Colors.red),
+      );
     }
   }
 
@@ -61,9 +81,7 @@ class _AddServicePageState extends State<AddServicePage> {
         foregroundColor: Colors.black87,
         title: const Text(
           'Add Service',
-          style: TextStyle(
-            fontWeight: FontWeight.bold,
-          ),
+          style: TextStyle(fontWeight: FontWeight.bold),
         ),
       ),
 
@@ -74,23 +92,16 @@ class _AddServicePageState extends State<AddServicePage> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-
               const Text(
                 'Create New Service',
-                style: TextStyle(
-                  fontSize: 24,
-                  fontWeight: FontWeight.bold,
-                ),
+                style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
               ),
 
               const SizedBox(height: 6),
 
               const Text(
                 'Add details about the service you provide.',
-                style: TextStyle(
-                  fontSize: 14,
-                  color: Colors.grey,
-                ),
+                style: TextStyle(fontSize: 14, color: Colors.grey),
               ),
 
               const SizedBox(height: 25),
@@ -205,17 +216,12 @@ class _AddServicePageState extends State<AddServicePage> {
                   icon: const Icon(Icons.add),
                   label: const Text(
                     'Add Service',
-                    style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
-                    ),
+                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
                   ),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: const Color(0xFF2563EB),
                     foregroundColor: Colors.white,
-                    padding: const EdgeInsets.symmetric(
-                      vertical: 16,
-                    ),
+                    padding: const EdgeInsets.symmetric(vertical: 16),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(12),
                     ),
@@ -234,10 +240,7 @@ class _AddServicePageState extends State<AddServicePage> {
   Widget _buildLabel(String text) {
     return Text(
       text,
-      style: const TextStyle(
-        fontSize: 15,
-        fontWeight: FontWeight.bold,
-      ),
+      style: const TextStyle(fontSize: 15, fontWeight: FontWeight.bold),
     );
   }
 
@@ -247,31 +250,18 @@ class _AddServicePageState extends State<AddServicePage> {
   }) {
     return InputDecoration(
       hintText: hintText,
-      prefixIcon: const Icon(
-        Icons.circle,
-        color: Colors.transparent,
-        size: 0,
-      ),
-      suffixIcon: Icon(
-        icon,
-        color: const Color(0xFF2563EB),
-      ),
+      prefixIcon: const Icon(Icons.circle, color: Colors.transparent, size: 0),
+      suffixIcon: Icon(icon, color: const Color(0xFF2563EB)),
       filled: true,
       fillColor: Colors.white,
-      contentPadding: const EdgeInsets.symmetric(
-        horizontal: 16,
-        vertical: 16,
-      ),
+      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
       border: OutlineInputBorder(
         borderRadius: BorderRadius.circular(12),
         borderSide: BorderSide.none,
       ),
       focusedBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(12),
-        borderSide: const BorderSide(
-          color: Color(0xFF2563EB),
-          width: 1.5,
-        ),
+        borderSide: const BorderSide(color: Color(0xFF2563EB), width: 1.5),
       ),
     );
   }

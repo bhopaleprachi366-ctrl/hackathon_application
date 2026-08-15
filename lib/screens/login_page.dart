@@ -4,7 +4,6 @@ import 'package:hackathon_application/screens/signup_page.dart';
 import 'forgot_password.dart';
 import 'home_page.dart';
 
-
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
 
