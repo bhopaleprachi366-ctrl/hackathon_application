@@ -41,46 +41,44 @@ class DefaultFirebaseOptions {
   }
 
   static const FirebaseOptions web = FirebaseOptions(
-    apiKey: 'AIzaSyA-8XHEM11d0h1OGRfYjE_FFNBrQuFzeeY',
-    appId: '1:935370940540:web:33f27ed17ff8becbdce9f9',
-    messagingSenderId: '935370940540',
-    projectId: 'fir-44666',
-    authDomain: 'fir-44666.firebaseapp.com',
-    storageBucket: 'fir-44666.firebasestorage.app',
+    apiKey: 'AIzaSyCnEQQl1vxovii4w0tC0S7RozykfDDEfo0',
+    appId: '1:376712370421:web:a00522deb38f3ec5c14dbc',
+    messagingSenderId: '376712370421',
+    projectId: 'hackathon-fac37',
+    authDomain: 'hackathon-fac37.firebaseapp.com',
+    storageBucket: 'hackathon-fac37.firebasestorage.app',
   );
 
   static const FirebaseOptions android = FirebaseOptions(
-    apiKey: 'AIzaSyBJXto33J6p2upf8j2Arx-Psf6ORzpbwAA',
-    appId: '1:935370940540:android:5a9aba9344efb8e5dce9f9',
-    messagingSenderId: '935370940540',
-    projectId: 'fir-44666',
-    storageBucket: 'fir-44666.firebasestorage.app',
+    apiKey: 'AIzaSyChKYX205AkIFb4QkZSY-_ZCKHMXPCNrMU',
+    appId: '1:376712370421:android:6972c12b62a440c8c14dbc',
+    messagingSenderId: '376712370421',
+    projectId: 'hackathon-fac37',
+    storageBucket: 'hackathon-fac37.firebasestorage.app',
   );
-
   static const FirebaseOptions ios = FirebaseOptions(
-    apiKey: 'AIzaSyAHSf0hKL4vl8Zvjka_6xHiYke59SrPmag',
-    appId: '1:935370940540:ios:69c71da0e5d40de4dce9f9',
-    messagingSenderId: '935370940540',
-    projectId: 'fir-44666',
-    storageBucket: 'fir-44666.firebasestorage.app',
-    iosBundleId: 'com.example.project',
+    apiKey: 'AIzaSyCBx8g5sFngOtm3NFte5xUnblRSHvhcDX4',
+    appId: '1:376712370421:ios:64e5a37512d48abac14dbc',
+    messagingSenderId: '376712370421',
+    projectId: 'hackathon-fac37',
+    storageBucket: 'hackathon-fac37.firebasestorage.app',
+    iosBundleId: 'com.example.hackathonApplication',
   );
-
   static const FirebaseOptions macos = FirebaseOptions(
-    apiKey: 'AIzaSyAHSf0hKL4vl8Zvjka_6xHiYke59SrPmag',
-    appId: '1:935370940540:ios:69c71da0e5d40de4dce9f9',
-    messagingSenderId: '935370940540',
-    projectId: 'fir-44666',
-    storageBucket: 'fir-44666.firebasestorage.app',
-    iosBundleId: 'com.example.project',
+    apiKey: 'AIzaSyCBx8g5sFngOtm3NFte5xUnblRSHvhcDX4',
+    appId: '1:376712370421:ios:64e5a37512d48abac14dbc',
+    messagingSenderId: '376712370421',
+    projectId: 'hackathon-fac37',
+    storageBucket: 'hackathon-fac37.firebasestorage.app',
+    iosBundleId: 'com.example.hackathonApplication',
   );
 
   static const FirebaseOptions windows = FirebaseOptions(
-    apiKey: 'AIzaSyA-8XHEM11d0h1OGRfYjE_FFNBrQuFzeeY',
-    appId: '1:935370940540:web:362b93cc227b05cbdce9f9',
-    messagingSenderId: '935370940540',
-    projectId: 'fir-44666',
-    authDomain: 'fir-44666.firebaseapp.com',
-    storageBucket: 'fir-44666.firebasestorage.app',
+    apiKey: 'AIzaSyCnEQQl1vxovii4w0tC0S7RozykfDDEfo0',
+    appId: '1:376712370421:web:528f8bad89db6405c14dbc',
+    messagingSenderId: '376712370421',
+    projectId: 'hackathon-fac37',
+    authDomain: 'hackathon-fac37.firebaseapp.com',
+    storageBucket: 'hackathon-fac37.firebasestorage.app',
   );
 }
