@@ -2,7 +2,6 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:project/admin/admin_login.dart';
-
 import '../theme/app_theme.dart';
 
 class SignupPage extends StatefulWidget {

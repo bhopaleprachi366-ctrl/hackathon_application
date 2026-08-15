@@ -3,7 +3,6 @@ import 'package:flutter/material.dart';
 import 'notice_board.dart';
 import 'timetable.dart';
 import 'lecture_cancellations.dart';
-
 import '../theme/app_theme.dart';
 
 class StudentHome extends StatefulWidget {
