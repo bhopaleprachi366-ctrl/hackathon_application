@@ -1,7 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
-
+import 'package:hackathon_application/navigation/bottom_navigation.dart';
 import 'package:hackathon_application/customer_side/homepage.dart';
 import 'package:hackathon_application/screens/signup_page.dart';
 import 'package:hackathon_application/screens/vendor/vendor_dashboard.dart';
@@ -69,7 +69,7 @@ class _LoginPageState extends State<LoginPage> {
         Navigator.pushReplacement(
           context,
           MaterialPageRoute(
-            builder: (context) => const HomePage(),
+            builder: (context) => const NavigationPage(),
           ),
         );
       } else if (role == "vendor") {

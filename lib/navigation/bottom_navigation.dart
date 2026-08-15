@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
+
 import 'package:hackathon_application/customer_side/homepage.dart';
 import 'package:hackathon_application/customer_side/my_subscriptions.dart';
 import 'package:hackathon_application/customer_side/services.dart';
-import 'package:hackathon_application/customer_side/subscription.dart';
+import 'package:hackathon_application/customer_side/profile_page.dart';
 
 class NavigationPage extends StatefulWidget {
   const NavigationPage({super.key});
@@ -18,8 +19,10 @@ class _NavigationPageState extends State<NavigationPage> {
     HomePage(),
     ServicesPage(),
     MySubscriptionsPage(),
-    Center(child: Text('Deliveries')),
-    Center(child: Text('Profile')),
+    Center(
+      child: Text('Deliveries'),
+    ),
+    ProfilePage(),
   ];
 
   @override
@@ -28,9 +31,7 @@ class _NavigationPageState extends State<NavigationPage> {
       body: pages[currentIndex],
 
       bottomNavigationBar: BottomNavigationBar(
-        //backgroundColor: const Color(0xFF1565C0),
         currentIndex: currentIndex,
-
         type: BottomNavigationBarType.fixed,
 
         selectedItemColor: const Color(0xFF1565C0),
@@ -62,6 +63,7 @@ class _NavigationPageState extends State<NavigationPage> {
 
           BottomNavigationBarItem(
             icon: Icon(Icons.local_shipping_outlined),
+            activeIcon: Icon(Icons.local_shipping),
             label: 'Deliveries',
           ),
 
