@@ -17,7 +17,7 @@ class _NavigationPageState extends State<NavigationPage> {
   final List<Widget> pages = const [
     HomePage(),
     ServicesPage(),
-    MySubscriptionPage(),
+    MySubscriptionsPage(),
     DeliveriesPage(),
     Center(child: Text('Profile')),
   ];

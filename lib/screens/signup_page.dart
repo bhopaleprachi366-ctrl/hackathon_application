@@ -13,15 +13,18 @@ class _SignupPageState extends State<SignupPage> {
   final nameController = TextEditingController();
   final emailController = TextEditingController();
   final phoneController = TextEditingController();
+  final addressController = TextEditingController();
   final passwordController = TextEditingController();
   final confirmPasswordController = TextEditingController();
 
+  String selectedRole = "customer";
   bool isLoading = false;
 
   Future<void> signup() async {
     if (nameController.text.trim().isEmpty ||
         emailController.text.trim().isEmpty ||
         phoneController.text.trim().isEmpty ||
+        addressController.text.trim().isEmpty ||
         passwordController.text.isEmpty ||
         confirmPasswordController.text.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -32,8 +35,7 @@ class _SignupPageState extends State<SignupPage> {
       return;
     }
 
-    if (passwordController.text !=
-        confirmPasswordController.text) {
+    if (passwordController.text != confirmPasswordController.text) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text("Passwords do not match"),
@@ -47,12 +49,14 @@ class _SignupPageState extends State<SignupPage> {
     });
 
     try {
-      UserCredential userCredential = await FirebaseAuth.instance
-          .createUserWithEmailAndPassword(
+      // Create Firebase Authentication account
+      UserCredential userCredential =
+          await FirebaseAuth.instance.createUserWithEmailAndPassword(
         email: emailController.text.trim(),
         password: passwordController.text,
       );
 
+      // Save user information in Firestore
       await FirebaseFirestore.instance
           .collection("users")
           .doc(userCredential.user!.uid)
@@ -60,7 +64,15 @@ class _SignupPageState extends State<SignupPage> {
         "name": nameController.text.trim(),
         "email": emailController.text.trim(),
         "phone": phoneController.text.trim(),
-        "role": "customer",
+
+        // Role selected during signup
+        "role": selectedRole,
+
+        // Empty initially - can be added later
+        "image": "",
+
+        "address": addressController.text.trim(),
+
         "createdAt": FieldValue.serverTimestamp(),
       });
 
@@ -89,7 +101,9 @@ class _SignupPageState extends State<SignupPage> {
       );
     } catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text("Error: $e")),
+        SnackBar(
+          content: Text("Error: $e"),
+        ),
       );
     } finally {
       if (mounted) {
@@ -105,6 +119,7 @@ class _SignupPageState extends State<SignupPage> {
     nameController.dispose();
     emailController.dispose();
     phoneController.dispose();
+    addressController.dispose();
     passwordController.dispose();
     confirmPasswordController.dispose();
     super.dispose();
@@ -130,8 +145,19 @@ class _SignupPageState extends State<SignupPage> {
               ),
             ),
 
+            const SizedBox(height: 10),
+
+            const Text(
+              "Create your SubServe account",
+              style: TextStyle(
+                fontSize: 15,
+                color: Colors.grey,
+              ),
+            ),
+
             const SizedBox(height: 30),
 
+            // Name
             TextField(
               controller: nameController,
               decoration: const InputDecoration(
@@ -143,6 +169,7 @@ class _SignupPageState extends State<SignupPage> {
 
             const SizedBox(height: 15),
 
+            // Email
             TextField(
               controller: emailController,
               keyboardType: TextInputType.emailAddress,
@@ -155,6 +182,7 @@ class _SignupPageState extends State<SignupPage> {
 
             const SizedBox(height: 15),
 
+            // Phone
             TextField(
               controller: phoneController,
               keyboardType: TextInputType.phone,
@@ -167,6 +195,70 @@ class _SignupPageState extends State<SignupPage> {
 
             const SizedBox(height: 15),
 
+            // Address
+            TextField(
+              controller: addressController,
+              maxLines: 2,
+              decoration: const InputDecoration(
+                labelText: "Address",
+                prefixIcon: Icon(Icons.location_on),
+                border: OutlineInputBorder(),
+              ),
+            ),
+
+            const SizedBox(height: 20),
+
+            // Role
+            Align(
+              alignment: Alignment.centerLeft,
+              child: Text(
+                "Select Account Type",
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                  color: Theme.of(context).colorScheme.primary,
+                ),
+              ),
+            ),
+
+            const SizedBox(height: 10),
+
+            Row(
+              children: [
+                Expanded(
+                  child: RadioListTile<String>(
+                    value: "customer",
+                    groupValue: selectedRole,
+                    title: const Text("Customer"),
+                    secondary: const Icon(Icons.person),
+                    contentPadding: EdgeInsets.zero,
+                    onChanged: (value) {
+                      setState(() {
+                        selectedRole = value!;
+                      });
+                    },
+                  ),
+                ),
+                Expanded(
+                  child: RadioListTile<String>(
+                    value: "vendor",
+                    groupValue: selectedRole,
+                    title: const Text("Vendor"),
+                    secondary: const Icon(Icons.store),
+                    contentPadding: EdgeInsets.zero,
+                    onChanged: (value) {
+                      setState(() {
+                        selectedRole = value!;
+                      });
+                    },
+                  ),
+                ),
+              ],
+            ),
+
+            const SizedBox(height: 15),
+
+            // Password
             TextField(
               controller: passwordController,
               obscureText: true,
@@ -179,6 +271,7 @@ class _SignupPageState extends State<SignupPage> {
 
             const SizedBox(height: 15),
 
+            // Confirm Password
             TextField(
               controller: confirmPasswordController,
               obscureText: true,
@@ -191,12 +284,19 @@ class _SignupPageState extends State<SignupPage> {
 
             const SizedBox(height: 25),
 
+            // Create Account
             SizedBox(
               width: double.infinity,
               child: ElevatedButton(
                 onPressed: isLoading ? null : signup,
                 child: isLoading
-                    ? const CircularProgressIndicator()
+                    ? const SizedBox(
+                        height: 22,
+                        width: 22,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                        ),
+                      )
                     : const Text("Create Account"),
               ),
             ),
