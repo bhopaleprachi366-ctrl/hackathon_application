@@ -1,8 +1,8 @@
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
-import 'package:hackathon_application/screens/login_page.dart';
 import 'firebase_options.dart';
-
+import 'screens/splash_page.dart';
+import 'theme/app_theme.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -21,7 +21,9 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
-      home: const LoginPage(),
+      title: 'SubServe',
+      theme: AppTheme.lightTheme,
+      home: const SplashPage(),
     );
   }
 }

@@ -1,9 +1,11 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
-import 'package:hackathon_application/screens/signup_page.dart';
-import 'forgot_password.dart';
-import 'home_page.dart';
 
+import 'package:hackathon_application/customer_side/homepage.dart';
+import 'package:hackathon_application/screens/signup_page.dart';
+import 'package:hackathon_application/screens/vendor/vendor_dashboard.dart';
+import 'forgot_password.dart';
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
@@ -34,19 +36,58 @@ class _LoginPageState extends State<LoginPage> {
     });
 
     try {
-      await FirebaseAuth.instance.signInWithEmailAndPassword(
+      // 1. Login with Firebase Authentication
+      UserCredential userCredential =
+          await FirebaseAuth.instance.signInWithEmailAndPassword(
         email: emailController.text.trim(),
         password: passwordController.text.trim(),
       );
 
+      // 2. Get logged-in user's UID
+      String uid = userCredential.user!.uid;
+
+      // 3. Get user's document from Firestore
+      DocumentSnapshot userDocument = await FirebaseFirestore.instance
+          .collection("users")
+          .doc(uid)
+          .get();
+
+      if (!userDocument.exists) {
+        throw Exception("User profile not found in Firestore");
+      }
+
+      // 4. Get role
+      Map<String, dynamic> userData =
+          userDocument.data() as Map<String, dynamic>;
+
+      String role = userData["role"] ?? "";
+
       if (!mounted) return;
 
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(
-          builder: (context) => const HomePage(),
-        ),
-      );
+      // 5. Open dashboard according to role
+      if (role == "customer") {
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(
+            builder: (context) => const HomePage(),
+          ),
+        );
+      } else if (role == "vendor") {
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(
+            builder: (context) => const VendorDashboard(),
+          ),
+        );
+      } else {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text("Invalid user role"),
+          ),
+        );
+
+        await FirebaseAuth.instance.signOut();
+      }
     } on FirebaseAuthException catch (e) {
       String message = "Login failed";
 
@@ -56,15 +97,23 @@ class _LoginPageState extends State<LoginPage> {
         message = "Incorrect password";
       } else if (e.code == "invalid-credential") {
         message = "Invalid email or password";
+      } else if (e.code == "user-disabled") {
+        message = "This account has been disabled";
       }
 
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(message)),
-      );
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(message)),
+        );
+      }
     } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text("Error: $e")),
-      );
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text("Error: $e"),
+          ),
+        );
+      }
     } finally {
       if (mounted) {
         setState(() {
@@ -139,8 +188,7 @@ class _LoginPageState extends State<LoginPage> {
                   Navigator.push(
                     context,
                     MaterialPageRoute(
-                      builder: (context) =>
-                          const ForgotPasswordPage(),
+                      builder: (context) => const ForgotPasswordPage(),
                     ),
                   );
                 },
@@ -155,7 +203,13 @@ class _LoginPageState extends State<LoginPage> {
               child: ElevatedButton(
                 onPressed: isLoading ? null : login,
                 child: isLoading
-                    ? const CircularProgressIndicator()
+                    ? const SizedBox(
+                        height: 22,
+                        width: 22,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2,
+                        ),
+                      )
                     : const Text("Login"),
               ),
             ),
