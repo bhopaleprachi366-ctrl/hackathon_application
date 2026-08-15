@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
-
 import 'package:hackathon_application/navigation/bottom_navigation.dart';
+
+import 'package:hackathon_application/screens/splash_page.dart';
 import 'firebase_options.dart';
 
 Future<void> main() async {
@@ -25,7 +26,7 @@ class SubServeApp extends StatelessWidget {
         fontFamily: 'Poppins',
         colorScheme: ColorScheme.fromSeed(seedColor: const Color(0xFF1565C0)),
       ),
-      home: const NavigationPage(),
+      home: const SplashPage(),
     );
   }
 }
