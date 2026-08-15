@@ -53,7 +53,6 @@ class DefaultFirebaseOptions {
     projectId: 'hackathon-fac37',
     storageBucket: 'hackathon-fac37.firebasestorage.app',
   );
-
   static const FirebaseOptions ios = FirebaseOptions(
     apiKey: 'AIzaSyCBx8g5sFngOtm3NFte5xUnblRSHvhcDX4',
     appId: '1:376712370421:ios:64e5a37512d48abac14dbc',
@@ -62,7 +61,6 @@ class DefaultFirebaseOptions {
     storageBucket: 'hackathon-fac37.firebasestorage.app',
     iosBundleId: 'com.example.hackathonApplication',
   );
-
   static const FirebaseOptions macos = FirebaseOptions(
     apiKey: 'AIzaSyCBx8g5sFngOtm3NFte5xUnblRSHvhcDX4',
     appId: '1:376712370421:ios:64e5a37512d48abac14dbc',

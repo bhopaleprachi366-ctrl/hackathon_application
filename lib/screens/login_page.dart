@@ -2,10 +2,13 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:hackathon_application/navigation/bottom_navigation.dart';
+<<<<<<< HEAD
 import 'package:hackathon_application/screens/signup_page.dart';
 import 'forgot_password.dart';
 import 'package:hackathon_application/customer_side/homepage.dart';
 
+=======
+>>>>>>> dcbf4c8294c70fc1bf7432787d0ed95fc8c40f02
 import 'package:hackathon_application/customer_side/homepage.dart';
 import 'package:hackathon_application/screens/signup_page.dart';
 import 'package:hackathon_application/screens/vendor/vendor_dashboard.dart';
@@ -74,7 +77,13 @@ class _LoginPageState extends State<LoginPage> {
       if (role == "customer") {
         Navigator.pushReplacement(
           context,
+<<<<<<< HEAD
           MaterialPageRoute(builder: (context) => const NavigationPage()),
+=======
+          MaterialPageRoute(
+            builder: (context) => const NavigationPage(),
+          ),
+>>>>>>> dcbf4c8294c70fc1bf7432787d0ed95fc8c40f02
         );
       } else if (role == "vendor") {
         Navigator.pushReplacement(
