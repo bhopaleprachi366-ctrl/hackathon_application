@@ -82,5 +82,46 @@ class DefaultFirebaseOptions {
     projectId: 'hackathon-fac37',
     authDomain: 'hackathon-fac37.firebaseapp.com',
     storageBucket: 'hackathon-fac37.firebasestorage.app',
+    apiKey: 'AIzaSyA-8XHEM11d0h1OGRfYjE_FFNBrQuFzeeY',
+    appId: '1:935370940540:web:33f27ed17ff8becbdce9f9',
+    messagingSenderId: '935370940540',
+    projectId: 'fir-44666',
+    authDomain: 'fir-44666.firebaseapp.com',
+    storageBucket: 'fir-44666.firebasestorage.app',
+  );
+
+  static const FirebaseOptions android = FirebaseOptions(
+    apiKey: 'AIzaSyBJXto33J6p2upf8j2Arx-Psf6ORzpbwAA',
+    appId: '1:935370940540:android:5a9aba9344efb8e5dce9f9',
+    messagingSenderId: '935370940540',
+    projectId: 'fir-44666',
+    storageBucket: 'fir-44666.firebasestorage.app',
+  );
+
+  static const FirebaseOptions ios = FirebaseOptions(
+    apiKey: 'AIzaSyAHSf0hKL4vl8Zvjka_6xHiYke59SrPmag',
+    appId: '1:935370940540:ios:69c71da0e5d40de4dce9f9',
+    messagingSenderId: '935370940540',
+    projectId: 'fir-44666',
+    storageBucket: 'fir-44666.firebasestorage.app',
+    iosBundleId: 'com.example.project',
+  );
+
+  static const FirebaseOptions macos = FirebaseOptions(
+    apiKey: 'AIzaSyAHSf0hKL4vl8Zvjka_6xHiYke59SrPmag',
+    appId: '1:935370940540:ios:69c71da0e5d40de4dce9f9',
+    messagingSenderId: '935370940540',
+    projectId: 'fir-44666',
+    storageBucket: 'fir-44666.firebasestorage.app',
+    iosBundleId: 'com.example.project',
+  );
+
+  static const FirebaseOptions windows = FirebaseOptions(
+    apiKey: 'AIzaSyA-8XHEM11d0h1OGRfYjE_FFNBrQuFzeeY',
+    appId: '1:935370940540:web:362b93cc227b05cbdce9f9',
+    messagingSenderId: '935370940540',
+    projectId: 'fir-44666',
+    authDomain: 'fir-44666.firebaseapp.com',
+    storageBucket: 'fir-44666.firebasestorage.app',
   );
 }
