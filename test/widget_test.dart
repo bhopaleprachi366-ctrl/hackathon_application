@@ -14,10 +14,17 @@ void main() {
   testWidgets('Counter increments smoke test', (WidgetTester tester) async {
     // Build our app and trigger a frame.
 <<<<<<< HEAD
+<<<<<<< HEAD
     await tester.pumpWidget(const MyApp());
 =======
     await tester.pumpWidget(const SubServeApp());
 >>>>>>> 2e50f87933f4881bf8088e621692378779d08a8c
+=======
+
+    await tester.pumpWidget(const SubServeApp());
+
+    await tester.pumpWidget(const MyApp());
+>>>>>>> 175f09dc933504074c414746529e7bc24ff5e311
 
     // Verify that our counter starts at 0.
     expect(find.text('0'), findsOneWidget);

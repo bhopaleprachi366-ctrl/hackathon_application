@@ -1,10 +1,22 @@
 import 'package:flutter/material.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 
 class DeliveriesPage extends StatelessWidget {
   const DeliveriesPage({super.key});
 
   @override
   Widget build(BuildContext context) {
+    final User? user = FirebaseAuth.instance.currentUser;
+
+    if (user == null) {
+      return const Scaffold(
+        body: Center(
+          child: Text('Please login first'),
+        ),
+      );
+    }
+
     return Scaffold(
       backgroundColor: const Color(0xFFF7F8FA),
 
@@ -14,110 +26,129 @@ class DeliveriesPage extends StatelessWidget {
         foregroundColor: Colors.black87,
         title: const Text(
           'Deliveries',
-          style: TextStyle(
-            fontWeight: FontWeight.bold,
-          ),
+          style: TextStyle(fontWeight: FontWeight.bold),
         ),
       ),
 
-      body: Padding(
-        padding: const EdgeInsets.all(20),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            const Text(
-              'Upcoming Deliveries',
-              style: TextStyle(
-                fontSize: 24,
-                fontWeight: FontWeight.bold,
+      body: StreamBuilder<QuerySnapshot>(
+        stream: FirebaseFirestore.instance
+            .collection('deliveries')
+            .where('vendorId', isEqualTo: user.uid)
+            .snapshots(),
+
+        builder: (context, snapshot) {
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            return const Center(
+              child: CircularProgressIndicator(),
+            );
+          }
+
+          if (snapshot.hasError) {
+            return Center(
+              child: Text(
+                'Error: ${snapshot.error}',
+                textAlign: TextAlign.center,
               ),
-            ),
+            );
+          }
 
-            const SizedBox(height: 6),
+          final deliveries = snapshot.data?.docs ?? [];
 
-            const Text(
-              'Manage your upcoming service deliveries.',
-              style: TextStyle(
-                fontSize: 14,
-                color: Colors.grey,
-              ),
-            ),
+          final int total = deliveries.length;
 
-            const SizedBox(height: 20),
+          final int pending = deliveries.where((doc) {
+            final data = doc.data() as Map<String, dynamic>;
+            return data['status'] == 'scheduled' ||
+                data['status'] == 'pending' ||
+                data['status'] == 'Pending';
+          }).length;
 
-            // Delivery Summary
-            Row(
+          return Padding(
+            padding: const EdgeInsets.all(20),
+
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Expanded(
-                  child: _buildSummaryCard(
-                    icon: Icons.local_shipping_outlined,
-                    value: '24',
-                    title: 'Total',
+
+                const Text(
+                  'Upcoming Deliveries',
+                  style: TextStyle(
+                    fontSize: 24,
+                    fontWeight: FontWeight.bold,
                   ),
                 ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: _buildSummaryCard(
-                    icon: Icons.pending_actions_outlined,
-                    value: '06',
-                    title: 'Pending',
+
+                const SizedBox(height: 6),
+
+                const Text(
+                  'Manage your upcoming service deliveries.',
+                  style: TextStyle(
+                    fontSize: 14,
+                    color: Colors.grey,
                   ),
+                ),
+
+                const SizedBox(height: 20),
+
+                // Summary
+                Row(
+                  children: [
+                    Expanded(
+                      child: _buildSummaryCard(
+                        icon: Icons.local_shipping_outlined,
+                        value: '$total',
+                        title: 'Total',
+                      ),
+                    ),
+
+                    const SizedBox(width: 12),
+
+                    Expanded(
+                      child: _buildSummaryCard(
+                        icon: Icons.pending_actions_outlined,
+                        value: '$pending',
+                        title: 'Pending',
+                      ),
+                    ),
+                  ],
+                ),
+
+                const SizedBox(height: 24),
+
+                Expanded(
+                  child: deliveries.isEmpty
+                      ? const Center(
+                          child: Text(
+                            'No deliveries found.',
+                            style: TextStyle(
+                              fontSize: 16,
+                              color: Colors.grey,
+                            ),
+                          ),
+                        )
+                      : ListView.separated(
+                          itemCount: deliveries.length,
+                          separatorBuilder: (context, index) =>
+                              const SizedBox(height: 12),
+
+                          itemBuilder: (context, index) {
+                            final doc = deliveries[index];
+
+                            final data =
+                                doc.data() as Map<String, dynamic>;
+
+                            return _buildDeliveryCard(
+                              context,
+                              documentId: doc.id,
+                              data: data,
+                            );
+                          },
+                        ),
                 ),
               ],
             ),
-
-            const SizedBox(height: 24),
-
-            // Delivery List
-            Expanded(
-              child: ListView(
-                children: [
-                  _buildDeliveryCard(
-                    context,
-                    customerName: 'Rahul Patil',
-                    service: 'Home Cleaning',
-                    date: '15 Aug 2026',
-                    time: '10:00 AM',
-                    status: 'Pending',
-                  ),
-
-                  const SizedBox(height: 12),
-
-                  _buildDeliveryCard(
-                    context,
-                    customerName: 'Priya Sharma',
-                    service: 'Laundry Service',
-                    date: '15 Aug 2026',
-                    time: '12:30 PM',
-                    status: 'Confirmed',
-                  ),
-
-                  const SizedBox(height: 12),
-
-                  _buildDeliveryCard(
-                    context,
-                    customerName: 'Amit Joshi',
-                    service: 'Car Washing',
-                    date: '16 Aug 2026',
-                    time: '09:00 AM',
-                    status: 'Pending',
-                  ),
-
-                  const SizedBox(height: 12),
-
-                  _buildDeliveryCard(
-                    context,
-                    customerName: 'Sneha Deshmukh',
-                    service: 'Home Cleaning',
-                    date: '16 Aug 2026',
-                    time: '02:00 PM',
-                    status: 'Confirmed',
-                  ),
-                ],
-              ),
-            ),
-          ],
-        ),
+          );
+        },
       ),
     );
   }
@@ -129,24 +160,28 @@ class DeliveriesPage extends StatelessWidget {
   }) {
     return Container(
       padding: const EdgeInsets.all(18),
+
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(16),
+
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
+            color: Colors.black.withValues(alpha: 0.05),
             blurRadius: 10,
             offset: const Offset(0, 4),
           ),
         ],
       ),
+
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Icon(
-            Icons.local_shipping_outlined,
+
+          Icon(
+            icon,
             size: 28,
-            color: Color(0xFF2563EB),
+            color: const Color(0xFF2563EB),
           ),
 
           const SizedBox(height: 10),
@@ -175,37 +210,63 @@ class DeliveriesPage extends StatelessWidget {
 
   Widget _buildDeliveryCard(
     BuildContext context, {
-    required String customerName,
-    required String service,
-    required String date,
-    required String time,
-    required String status,
+    required String documentId,
+    required Map<String, dynamic> data,
   }) {
-    final bool isConfirmed = status == 'Confirmed';
+    final String status =
+        data['status']?.toString() ?? 'Unknown';
+
+    final String userId =
+        data['userId']?.toString() ?? 'Unknown';
+
+    final String serviceId =
+        data['serviceId']?.toString() ?? 'Unknown';
+
+    final String quantity =
+        data['quantity']?.toString() ?? '0';
+
+    String deliveryDate = 'Date not available';
+
+    if (data['deliveryDate'] is Timestamp) {
+      final Timestamp timestamp = data['deliveryDate'];
+
+      final DateTime date = timestamp.toDate();
+
+      deliveryDate =
+          '${date.day}/${date.month}/${date.year}';
+    }
+
+    final bool isCompleted =
+        status.toLowerCase() == 'completed';
 
     return Container(
       padding: const EdgeInsets.all(16),
+
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(16),
+
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
+            color: Colors.black.withValues(alpha: 0.05),
             blurRadius: 10,
             offset: const Offset(0, 4),
           ),
         ],
       ),
+
       child: Row(
         children: [
-          // Delivery Icon
+
           Container(
             width: 50,
             height: 50,
+
             decoration: BoxDecoration(
               color: const Color(0xFFEFF6FF),
               borderRadius: BorderRadius.circular(12),
             ),
+
             child: const Icon(
               Icons.local_shipping_outlined,
               color: Color(0xFF2563EB),
@@ -215,15 +276,15 @@ class DeliveriesPage extends StatelessWidget {
 
           const SizedBox(width: 14),
 
-          // Delivery Details
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
+
                 Text(
-                  customerName,
+                  'Service ID: $serviceId',
                   style: const TextStyle(
-                    fontSize: 16,
+                    fontSize: 15,
                     fontWeight: FontWeight.bold,
                   ),
                 ),
@@ -231,15 +292,26 @@ class DeliveriesPage extends StatelessWidget {
                 const SizedBox(height: 5),
 
                 Text(
-                  service,
+                  'Customer ID: $userId',
+                  style: const TextStyle(
+                    fontSize: 12,
+                    color: Colors.grey,
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+
+                const SizedBox(height: 5),
+
+                Text(
+                  'Quantity: $quantity',
                   style: const TextStyle(
                     fontSize: 13,
                     color: Color(0xFF2563EB),
-                    fontWeight: FontWeight.w500,
                   ),
                 ),
 
-                const SizedBox(height: 6),
+                const SizedBox(height: 5),
 
                 Row(
                   children: [
@@ -248,29 +320,11 @@ class DeliveriesPage extends StatelessWidget {
                       size: 13,
                       color: Colors.grey,
                     ),
-                    const SizedBox(width: 5),
-                    Text(
-                      date,
-                      style: const TextStyle(
-                        fontSize: 12,
-                        color: Colors.grey,
-                      ),
-                    ),
-                  ],
-                ),
 
-                const SizedBox(height: 4),
-
-                Row(
-                  children: [
-                    const Icon(
-                      Icons.access_time,
-                      size: 13,
-                      color: Colors.grey,
-                    ),
                     const SizedBox(width: 5),
+
                     Text(
-                      time,
+                      deliveryDate,
                       style: const TextStyle(
                         fontSize: 12,
                         color: Colors.grey,
@@ -286,18 +340,22 @@ class DeliveriesPage extends StatelessWidget {
                     horizontal: 9,
                     vertical: 4,
                   ),
+
                   decoration: BoxDecoration(
-                    color: isConfirmed
-                        ? const Color(0xFFEFF6FF)
+                    color: isCompleted
+                        ? Colors.green.shade50
                         : const Color(0xFFFFF7ED),
+
                     borderRadius: BorderRadius.circular(20),
                   ),
+
                   child: Text(
                     status,
                     style: TextStyle(
-                      color: isConfirmed
-                          ? const Color(0xFF2563EB)
+                      color: isCompleted
+                          ? Colors.green
                           : Colors.orange,
+
                       fontSize: 11,
                       fontWeight: FontWeight.bold,
                     ),
@@ -307,39 +365,76 @@ class DeliveriesPage extends StatelessWidget {
             ),
           ),
 
-          // More Options
           PopupMenuButton<String>(
             icon: const Icon(
               Icons.more_vert,
               color: Colors.grey,
             ),
-            onSelected: (value) {
+
+            onSelected: (value) async {
               if (value == 'complete') {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(
-                    content: Text('Delivery marked as completed'),
-                  ),
+                await _markCompleted(
+                  context,
+                  documentId,
                 );
               }
             },
+
             itemBuilder: (context) => [
-              const PopupMenuItem(
-                value: 'complete',
-                child: Row(
-                  children: [
-                    Icon(
-                      Icons.check_circle_outline,
-                      color: Color(0xFF2563EB),
-                    ),
-                    SizedBox(width: 10),
-                    Text('Mark Completed'),
-                  ],
+
+              if (!isCompleted)
+                const PopupMenuItem(
+                  value: 'complete',
+
+                  child: Row(
+                    children: [
+                      Icon(
+                        Icons.check_circle_outline,
+                        color: Color(0xFF2563EB),
+                      ),
+
+                      SizedBox(width: 10),
+
+                      Text('Mark Completed'),
+                    ],
+                  ),
                 ),
-              ),
             ],
           ),
         ],
       ),
     );
+  }
+
+  Future<void> _markCompleted(
+    BuildContext context,
+    String documentId,
+  ) async {
+    try {
+      await FirebaseFirestore.instance
+          .collection('deliveries')
+          .doc(documentId)
+          .update({
+        'status': 'completed',
+      });
+
+      if (!context.mounted) return;
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text(
+            'Delivery marked as completed',
+          ),
+        ),
+      );
+    } catch (e) {
+      if (!context.mounted) return;
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Error: $e'),
+        ),
+      );
+    }
   }
 }

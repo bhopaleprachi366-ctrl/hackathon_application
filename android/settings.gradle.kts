@@ -21,11 +21,19 @@ plugins {
     id("dev.flutter.flutter-plugin-loader") version "1.0.0"
     id("com.android.application") version "9.0.1" apply false
 <<<<<<< HEAD
+<<<<<<< HEAD
 =======
     // START: FlutterFire Configuration
     id("com.google.gms.google-services") version("4.4.4") apply false
     // END: FlutterFire Configuration
 >>>>>>> 2e50f87933f4881bf8088e621692378779d08a8c
+=======
+    // START: FlutterFire Configuration
+    id("com.google.gms.google-services") version("4.4.4") apply false
+    // END: FlutterFire Configuration
+=======
+>>>>>>> d101bebb987ebc5b6db619a1cc851c528b57bdb4
+>>>>>>> 175f09dc933504074c414746529e7bc24ff5e311
     id("org.jetbrains.kotlin.android") version "2.3.20" apply false
 }
 

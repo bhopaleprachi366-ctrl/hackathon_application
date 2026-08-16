@@ -1,9 +1,7 @@
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
-import 'package:hackathon_application/screens/Admin.dart/admin_dashboard.dart';
 //import 'package:hackathon_application/screens/login_page.dart';
-//import 'package:hackathon_application/screens/splash_page.dart';
-//import 'package:hackathon_application/screens/vendor/vendor_dashboard.dart';
+import 'package:hackathon_application/screens/vendor/vendor_dashboard.dart';
 import 'firebase_options.dart';
 
 
@@ -24,7 +22,7 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
-      home: const AdminDashboard(),
+      home: const VendorDashboard(),
     );
   }
 }

@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 
 class EditServicePage extends StatefulWidget {
+  final String serviceId;
   final String serviceName;
   final String category;
   final String description;
@@ -8,6 +10,7 @@ class EditServicePage extends StatefulWidget {
 
   const EditServicePage({
     super.key,
+    required this.serviceId,
     required this.serviceName,
     required this.category,
     required this.description,
@@ -59,8 +62,25 @@ class _EditServicePageState extends State<EditServicePage> {
     super.dispose();
   }
 
-  void _updateService() {
-    if (_formKey.currentState!.validate()) {
+  Future<void> _updateService() async {
+    if (!_formKey.currentState!.validate()) {
+      return;
+    }
+
+    try {
+      await FirebaseFirestore.instance
+          .collection('services')
+          .doc(widget.serviceId)
+          .update({
+        'name': _serviceNameController.text.trim(),
+        'category': selectedCategory,
+        'description': _descriptionController.text.trim(),
+        'price': double.parse(_priceController.text.trim()),
+        'updatedAt': FieldValue.serverTimestamp(),
+      });
+
+      if (!mounted) return;
+
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('Service updated successfully!'),
@@ -69,6 +89,15 @@ class _EditServicePageState extends State<EditServicePage> {
       );
 
       Navigator.pop(context);
+    } catch (e) {
+      if (!mounted) return;
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Error updating service: $e'),
+          backgroundColor: Colors.red,
+        ),
+      );
     }
   }
 
@@ -83,9 +112,7 @@ class _EditServicePageState extends State<EditServicePage> {
         foregroundColor: Colors.black87,
         title: const Text(
           'Edit Service',
-          style: TextStyle(
-            fontWeight: FontWeight.bold,
-          ),
+          style: TextStyle(fontWeight: FontWeight.bold),
         ),
       ),
 
@@ -96,7 +123,6 @@ class _EditServicePageState extends State<EditServicePage> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-
               const Text(
                 'Edit Service Details',
                 style: TextStyle(
@@ -117,7 +143,6 @@ class _EditServicePageState extends State<EditServicePage> {
 
               const SizedBox(height: 25),
 
-              // Service Name
               _buildLabel('Service Name'),
 
               const SizedBox(height: 8),
@@ -138,13 +163,12 @@ class _EditServicePageState extends State<EditServicePage> {
 
               const SizedBox(height: 18),
 
-              // Category
               _buildLabel('Category'),
 
               const SizedBox(height: 8),
 
               DropdownButtonFormField<String>(
-                value: selectedCategory,
+                initialValue: selectedCategory,
                 decoration: _inputDecoration(
                   hintText: 'Select category',
                   icon: Icons.category_outlined,
@@ -170,7 +194,6 @@ class _EditServicePageState extends State<EditServicePage> {
 
               const SizedBox(height: 18),
 
-              // Description
               _buildLabel('Description'),
 
               const SizedBox(height: 8),
@@ -192,7 +215,6 @@ class _EditServicePageState extends State<EditServicePage> {
 
               const SizedBox(height: 18),
 
-              // Price
               _buildLabel('Price'),
 
               const SizedBox(height: 8),
@@ -219,7 +241,6 @@ class _EditServicePageState extends State<EditServicePage> {
 
               const SizedBox(height: 30),
 
-              // Update Button
               SizedBox(
                 width: double.infinity,
                 child: ElevatedButton.icon(

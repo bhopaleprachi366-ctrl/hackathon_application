@@ -1,10 +1,22 @@
 import 'package:flutter/material.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 
 class SubscribersPage extends StatelessWidget {
   const SubscribersPage({super.key});
 
   @override
   Widget build(BuildContext context) {
+    final user = FirebaseAuth.instance.currentUser;
+
+    if (user == null) {
+      return const Scaffold(
+        body: Center(
+          child: Text('Please login first'),
+        ),
+      );
+    }
+
     return Scaffold(
       backgroundColor: const Color(0xFFF7F8FA),
 
@@ -14,149 +26,183 @@ class SubscribersPage extends StatelessWidget {
         foregroundColor: Colors.black87,
         title: const Text(
           'Subscribers',
-          style: TextStyle(
-            fontWeight: FontWeight.bold,
-          ),
+          style: TextStyle(fontWeight: FontWeight.bold),
         ),
       ),
 
-      body: Padding(
-        padding: const EdgeInsets.all(20),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
+      body: StreamBuilder<QuerySnapshot>(
+        stream: FirebaseFirestore.instance
+            .collection('subscriptions')
+            .where('vendorId', isEqualTo: user.uid)
+            .snapshots(),
 
-            const Text(
-              'Active Subscribers',
-              style: TextStyle(
-                fontSize: 24,
-                fontWeight: FontWeight.bold,
+        builder: (context, snapshot) {
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            return const Center(
+              child: CircularProgressIndicator(),
+            );
+          }
+
+          if (snapshot.hasError) {
+            return Center(
+              child: Text(
+                'Error: ${snapshot.error}',
+                textAlign: TextAlign.center,
               ),
-            ),
+            );
+          }
 
-            const SizedBox(height: 6),
+          final subscribers = snapshot.data?.docs ?? [];
 
-            const Text(
-              'View and manage your active subscribers.',
-              style: TextStyle(
-                fontSize: 14,
-                color: Colors.grey,
-              ),
-            ),
+          final activeSubscribers = subscribers.where((doc) {
+            final data = doc.data() as Map<String, dynamic>;
+            final status = data['status']?.toString().toLowerCase();
 
-            const SizedBox(height: 20),
+            return status == 'active' || status == 'confirmed';
+          }).length;
 
-            // Total Subscribers Card
-            Container(
-              width: double.infinity,
-              padding: const EdgeInsets.all(18),
-              decoration: BoxDecoration(
-                color: const Color(0xFF2563EB),
-                borderRadius: BorderRadius.circular(16),
-              ),
-              child: const Row(
-                children: [
-                  Icon(
-                    Icons.people_outline,
-                    color: Colors.white,
-                    size: 32,
+          return Padding(
+            padding: const EdgeInsets.all(20),
+
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+
+                const Text(
+                  'Active Subscribers',
+                  style: TextStyle(
+                    fontSize: 24,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+
+                const SizedBox(height: 6),
+
+                const Text(
+                  'View and manage your active subscribers.',
+                  style: TextStyle(
+                    fontSize: 14,
+                    color: Colors.grey,
+                  ),
+                ),
+
+                const SizedBox(height: 20),
+
+                // Total Subscribers
+                Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.all(18),
+
+                  decoration: BoxDecoration(
+                    color: const Color(0xFF2563EB),
+                    borderRadius: BorderRadius.circular(16),
                   ),
 
-                  SizedBox(width: 15),
-
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
+                  child: Row(
                     children: [
-                      Text(
-                        '48',
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontSize: 26,
-                          fontWeight: FontWeight.bold,
-                        ),
+
+                      const Icon(
+                        Icons.people_outline,
+                        color: Colors.white,
+                        size: 32,
                       ),
-                      Text(
-                        'Total Subscribers',
-                        style: TextStyle(
-                          color: Colors.white70,
-                          fontSize: 13,
-                        ),
+
+                      const SizedBox(width: 15),
+
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            '$activeSubscribers',
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 26,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+
+                          const Text(
+                            'Active Subscribers',
+                            style: TextStyle(
+                              color: Colors.white70,
+                              fontSize: 13,
+                            ),
+                          ),
+                        ],
                       ),
                     ],
                   ),
-                ],
-              ),
+                ),
+
+                const SizedBox(height: 24),
+
+                Expanded(
+                  child: subscribers.isEmpty
+                      ? const Center(
+                          child: Text(
+                            'No subscribers found.',
+                            style: TextStyle(
+                              fontSize: 16,
+                              color: Colors.grey,
+                            ),
+                          ),
+                        )
+                      : ListView.separated(
+                          itemCount: subscribers.length,
+
+                          separatorBuilder: (context, index) =>
+                              const SizedBox(height: 12),
+
+                          itemBuilder: (context, index) {
+                            final doc = subscribers[index];
+
+                            final data =
+                                doc.data() as Map<String, dynamic>;
+
+                            return _buildSubscriberCard(
+                              context,
+                              data,
+                            );
+                          },
+                        ),
+                ),
+              ],
             ),
-
-            const SizedBox(height: 24),
-
-            // Subscriber List
-            Expanded(
-              child: ListView(
-                children: [
-
-                  _buildSubscriberCard(
-                    context,
-                    name: 'Rahul Patil',
-                    service: 'Home Cleaning',
-                    date: 'Started: 10 Aug 2026',
-                    status: 'Active',
-                  ),
-
-                  const SizedBox(height: 12),
-
-                  _buildSubscriberCard(
-                    context,
-                    name: 'Priya Sharma',
-                    service: 'Laundry Service',
-                    date: 'Started: 08 Aug 2026',
-                    status: 'Active',
-                  ),
-
-                  const SizedBox(height: 12),
-
-                  _buildSubscriberCard(
-                    context,
-                    name: 'Amit Joshi',
-                    service: 'Car Washing',
-                    date: 'Started: 05 Aug 2026',
-                    status: 'Active',
-                  ),
-
-                  const SizedBox(height: 12),
-
-                  _buildSubscriberCard(
-                    context,
-                    name: 'Sneha Deshmukh',
-                    service: 'Home Cleaning',
-                    date: 'Started: 02 Aug 2026',
-                    status: 'Active',
-                  ),
-                ],
-              ),
-            ),
-          ],
-        ),
+          );
+        },
       ),
     );
   }
 
   Widget _buildSubscriberCard(
-    BuildContext context, {
-    required String name,
-    required String service,
-    required String date,
-    required String status,
-  }) {
+    BuildContext context,
+    Map<String, dynamic> data,
+  ) {
+    final String userId =
+        data['userId']?.toString() ?? 'Unknown';
+
+    final String serviceId =
+        data['serviceId']?.toString() ?? 'Unknown';
+
+    final String status =
+        data['status']?.toString() ?? 'Unknown';
+
+    final String frequency =
+        data['frequency']?.toString() ?? 'Not specified';
+
+    final String quantity =
+        data['quantity']?.toString() ?? '1';
+
     return Container(
       padding: const EdgeInsets.all(16),
 
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(16),
+
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
+            color: Colors.black.withValues(alpha: 0.05),
             blurRadius: 10,
             offset: const Offset(0, 4),
           ),
@@ -166,14 +212,15 @@ class SubscribersPage extends StatelessWidget {
       child: Row(
         children: [
 
-          // Profile Icon
           Container(
             width: 50,
             height: 50,
+
             decoration: BoxDecoration(
               color: const Color(0xFFEFF6FF),
               borderRadius: BorderRadius.circular(25),
             ),
+
             child: const Icon(
               Icons.person_outline,
               color: Color(0xFF2563EB),
@@ -183,16 +230,15 @@ class SubscribersPage extends StatelessWidget {
 
           const SizedBox(width: 14),
 
-          // Subscriber Details
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
 
                 Text(
-                  name,
+                  'Customer ID: $userId',
                   style: const TextStyle(
-                    fontSize: 16,
+                    fontSize: 15,
                     fontWeight: FontWeight.bold,
                   ),
                 ),
@@ -200,7 +246,7 @@ class SubscribersPage extends StatelessWidget {
                 const SizedBox(height: 5),
 
                 Text(
-                  service,
+                  'Service ID: $serviceId',
                   style: const TextStyle(
                     fontSize: 13,
                     color: Color(0xFF2563EB),
@@ -208,10 +254,20 @@ class SubscribersPage extends StatelessWidget {
                   ),
                 ),
 
+                const SizedBox(height: 5),
+
+                Text(
+                  'Quantity: $quantity',
+                  style: const TextStyle(
+                    fontSize: 12,
+                    color: Colors.grey,
+                  ),
+                ),
+
                 const SizedBox(height: 4),
 
                 Text(
-                  date,
+                  'Frequency: $frequency',
                   style: const TextStyle(
                     fontSize: 12,
                     color: Colors.grey,
@@ -225,10 +281,12 @@ class SubscribersPage extends StatelessWidget {
                     horizontal: 9,
                     vertical: 4,
                   ),
+
                   decoration: BoxDecoration(
                     color: const Color(0xFFEFF6FF),
                     borderRadius: BorderRadius.circular(20),
                   ),
+
                   child: Text(
                     status,
                     style: const TextStyle(
@@ -240,38 +298,6 @@ class SubscribersPage extends StatelessWidget {
                 ),
               ],
             ),
-          ),
-
-          // More Button
-          PopupMenuButton<String>(
-            icon: const Icon(
-              Icons.more_vert,
-              color: Colors.grey,
-            ),
-            onSelected: (value) {
-              if (value == 'view') {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(
-                    content: Text('Viewing $name'),
-                  ),
-                );
-              }
-            },
-            itemBuilder: (context) => [
-              const PopupMenuItem(
-                value: 'view',
-                child: Row(
-                  children: [
-                    Icon(
-                      Icons.visibility_outlined,
-                      color: Color(0xFF2563EB),
-                    ),
-                    SizedBox(width: 10),
-                    Text('View Details'),
-                  ],
-                ),
-              ),
-            ],
           ),
         ],
       ),

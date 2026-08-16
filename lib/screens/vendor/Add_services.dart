@@ -40,9 +40,22 @@ class _AddServicePageState extends State<AddServicePage> {
     if (!_formKey.currentState!.validate()) {
       return;
     }
+    final user = FirebaseAuth.instance.currentUser;
+
+if (user == null) {
+  if (!mounted) return;
+
+  ScaffoldMessenger.of(context).showSnackBar(
+    const SnackBar(
+      content: Text('Please login first'),
+      backgroundColor: Colors.red,
+    ),
+  );
+  return;
+}
 
     try {
-      await FirebaseFirestore.instance.collection('services').add({
+      await FirebaseFirestore.instance.collection('service').add({
         'name': _serviceNameController.text.trim(),
         'category': selectedCategory,
         'description': _descriptionController.text.trim(),
@@ -133,7 +146,7 @@ class _AddServicePageState extends State<AddServicePage> {
               const SizedBox(height: 8),
 
               DropdownButtonFormField<String>(
-                value: selectedCategory,
+                initialValue: selectedCategory,
                 decoration: _inputDecoration(
                   hintText: 'Select category',
                   icon: Icons.category_outlined,
